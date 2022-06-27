@@ -6,6 +6,7 @@ import SessionMiddleware from './middlewares/session';
 import DatabaseMiddleware from './middlewares/database';
 import UserMiddleware from './middlewares/user';
 import SceneMiddleware from './middlewares/scene';
+import TextQueryMiddleware from './middlewares/text-query';
 
 import Configuration from './config';
 import logger from './lib/logger/logger';
@@ -13,7 +14,10 @@ import { IContext } from './lib/bot.interface';
 import mongoose, { Mongoose } from 'mongoose';
 import { load } from './database';
 
+import { SCENE_QUERY } from './navigation/scene-query';
+
 import { TestScene } from './scenes/test.scene';
+import { HomeScene } from './scenes/home.scene';
 
 const config = Configuration();
 
@@ -65,6 +69,10 @@ const init = async () => {
     } catch(e: any) {
         databaseLogger.error(`Failed initing: ${e.stack!}`);
     }
+    
+    const user = new UserMiddleware(logger);
+    bot.use(user.init());
+    bot.use(TextQueryMiddleware);
 
     const sceneLogger = logger.child({
         module: 'SceneMiddleware',
@@ -72,16 +80,14 @@ const init = async () => {
     try {
         sceneLogger.info(`Initing`);
         const scene = new SceneMiddleware(logger, [
-            TestScene
+            TestScene,
+            HomeScene
         ]);
         bot.use(scene.init());
         sceneLogger.info(`Successfully inited.`);
     } catch(e: any) {
         sceneLogger.error(`Failed initing: ${e.stack!}`);
     }
-
-    const user = new UserMiddleware(logger);
-    bot.use(user.init());
     //
     bot.command('quit', (ctx) => {
         // Explicit usage
@@ -90,27 +96,30 @@ const init = async () => {
         // Using context shortcut
         ctx.leaveChat()
     })
-    
-    bot.on('text', async (ctx, next) => {
-        ctx.session.counter = ctx.session.counter + 1 || 1;
-        await ctx.reply(`Hello 1 ${ctx.session.counter}`, Markup
-            .inlineKeyboard([
-                Markup.button.callback('Test', 'callback_action'),
-                Markup.button.callback('Scene', 'test_callback'),
-            ])
-        )
-        await next();
+
+
+    bot.command('/start', async (ctx, next) => {
+        await ctx.scene.join(SCENE_QUERY.home);
+        return next();
     });
     
-    bot.on('callback_query', (async (ctx) => {
+    // bot.on('text', async (ctx, next) => {
+    //     ctx.session.counter = ctx.session.counter + 1 || 1;
+    //     await ctx.reply(`Hello! Counter is: ${ctx.session.counter}`, KEYBOARD.MAIN);
+    //     return next();
+    // });
+    
+    bot.on('callback_query', (async (ctx, next) => {
         console.log('CALLBACK_QUERY');
         console.dir(ctx.callbackQuery);
+        return next();
     }));
     
     
-    bot.action('callback_action', async (ctx) => {
+    bot.action('callback_action', async (ctx, next) => {
         await ctx.answerCbQuery();
         await ctx.editMessageText('test');
+        return next();
     });
     //
 

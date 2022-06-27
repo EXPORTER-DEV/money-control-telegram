@@ -6,4 +6,5 @@ export interface IContext extends Context {
     session: Record<string, any>;
     scene: SceneController;
     database: DatabaseMiddleware;
+    textQuery?: string;
 }
