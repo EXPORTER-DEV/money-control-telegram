@@ -23,7 +23,7 @@ export const ManageAccountScene = new Scene(
     Scene.joined(async (ctx) => {
         if (ctx.session.scene.param?.id) {
             const accountModel = ctx.database.inject<AccountModel>(AccountModel);
-            const account = await accountModel.findOne(ctx.session.scene.param?.id);
+            const account = await accountModel.findOne(ctx.session.scene.param?.id, ctx.user._id);
             if (account === undefined) {
                 ctx.textQuery = undefined;
                 await ctx.reply(`❗️ Can't find account.`);
@@ -47,8 +47,9 @@ export const ManageAccountScene = new Scene(
     }),
     Scene.default(async (ctx) => {
         const account: AccountDto = ctx.session.scene.account;
-        await ctx.reply(`Please select action for ${AccountType[account.type]} - ${account.name} - ${account.transactionsTotal} ${account.type === AccountTypeEnum.PURPOSE && account.purpose ? `/ ${account.purpose} ${AccountCurrency[account.currency]} (${Math.round((account.transactionsTotal/account.purpose)*100)}%)` : `${AccountCurrency[account.currency]}`}`, Markup.inlineKeyboard([
+        await ctx.replyWithMarkdown(`Please select action for ${AccountType[account.type]} - *${account.name}* - ${account.transactionsTotal} ${account.type === AccountTypeEnum.PURPOSE && account.purpose ? `/ ${account.purpose} *${AccountCurrency[account.currency]}* (${Math.round((account.transactionsTotal/account.purpose)*100)}%)` : `*${AccountCurrency[account.currency]}*`}`, Markup.inlineKeyboard([
             [BUTTON.SHOW_TRANSACTION],
+            [BUTTON.ADD_TRANSACTION],
             [BUTTON.EDIT, BUTTON.DELETE],
             [BUTTON.PAGINATION_CLOSE]
         ]));

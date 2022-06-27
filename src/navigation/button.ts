@@ -20,6 +20,7 @@ export const BUTTON = {
     'EDIT': Markup.button.callback('📝 Edit', BUTTON_QUERY.edit),
     'DELETE': Markup.button.callback('🗑 Delete', BUTTON_QUERY.delete),
     'SHOW_TRANSACTION': Markup.button.callback('📊 Open transactions', BUTTON_QUERY.show_transaction),
+    'ADD_TRANSACTION': Markup.button.callback('🏧 Add transaction', BUTTON_QUERY.add_transaction),
     'SKIP': Markup.button.callback('🔘 Skip', BUTTON_QUERY.skip),
     'CONFIRM': Markup.button.callback('🆗 Confirm', BUTTON_QUERY.confirm),
 };

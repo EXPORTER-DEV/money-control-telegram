@@ -12,5 +12,6 @@ export const BUTTON_QUERY = {
     'delete': 'delete',
     'skip': 'skip',
     'show_transaction': 'show_transaction',
+    'add_transaction': 'add_transaction',
     'confirm': 'confirm',
 };
