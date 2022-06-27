@@ -1,71 +1,87 @@
 import { Markup, Telegraf } from 'telegraf';
 import 'dotenv/config';
 import "reflect-metadata";
-import Session from './middlewares/session';
-import Database from './middlewares/database';
+
+import SessionMiddleware from './middlewares/session';
+import DatabaseMiddleware from './middlewares/database';
+import UserMiddleware from './middlewares/user';
+import SceneMiddleware from './middlewares/scene';
+
 import Configuration from './config';
 import logger from './lib/logger/logger';
 import { IContext } from './lib/bot.interface';
 import mongoose, { Mongoose } from 'mongoose';
 import { load } from './database';
 
+import { TestScene } from './scenes/test.scene';
+
 const config = Configuration();
 
 const bot = new Telegraf<IContext>(process.env.BOT_TOKEN || '');
 
-let session: Session;
+let session: SessionMiddleware;
+let database: DatabaseMiddleware;
+
 let connection: Mongoose;
-let database: Database;
 
 logger.info(`Using config: ${JSON.stringify(config)}`);
 
 const init = async () => {
+    const sessionLogger = logger.child({
+        module: 'SessionMiddleware'
+    });
     try {
-        logger.info({
-            module: 'Session'
-        }, `Initing`);
-        session = new Session({
+        sessionLogger.info(`Initing`);
+        session = new SessionMiddleware({
             connection: config.redis,
         }, logger);
         bot.use(session.init());
-        logger.info({
-            module: 'Session'
-        }, `Successfully inited`);
+        sessionLogger.info(`Successfully inited`);
     } catch(e: any) {
-        logger.error({
-            module: 'Session',
-        }, `Failed initing: ${e.stack!}`);
-    }
-    const url = `mongodb://${config.mongo.username}:${config.mongo.password}@${config.mongo.host}:${config.mongo.port}`;
-    try {
-        logger.info({
-            module: 'MongoDB',
-        }, `Starting connecting with: ${url}`);
-        connection = await mongoose.connect(url);
-        logger.info({
-            module: 'MongoDB',
-        }, `Successfully connected.`);
-    } catch(e: any) {
-        logger.error({
-            module: 'MongoDB',
-        }, `Failed connecting: ${e.stack!}`);
-    }
-    try {
-        logger.info({
-            module: 'Database',
-        }, `Starting initing database models`);
-        const models = await load(connection);
-        database = new Database(models);
-        bot.use(database.init());
-        logger.info({
-            module: 'Database',
-        }, `Successfully inited database models`);
-    } catch(e: any) {
-        logger.error({
-            module: 'Database',
-        }, `Failed  initing: ${e.stack!}`);
+        sessionLogger.error(`Failed initing: ${e.stack!}`);
     }
 
+    const url = `mongodb://${config.mongo.username}:${config.mongo.password}@${config.mongo.host}:${config.mongo.port}`;
+    const mongoLogger = logger.child({
+        module: 'MongoDB',
+    });
+    try {
+        mongoLogger.info(`Starting connecting with: ${url}`);
+        connection = await mongoose.connect(url);
+        mongoLogger.info(`Successfully connected.`);
+    } catch(e: any) {
+        mongoLogger.error(`Failed connecting: ${e.stack!}`);
+    }
+
+    const databaseLogger = logger.child({
+        module: 'DatabaseMiddleware'
+    });
+    try {
+        databaseLogger.info(`Starting initing database models`);
+        const models = await load(connection);
+        database = new DatabaseMiddleware(models);
+        bot.use(database.init());
+        databaseLogger.info(`Successfully inited database models`);
+    } catch(e: any) {
+        databaseLogger.error(`Failed initing: ${e.stack!}`);
+    }
+
+    const sceneLogger = logger.child({
+        module: 'SceneMiddleware',
+    })
+    try {
+        sceneLogger.info(`Initing`);
+        const scene = new SceneMiddleware(logger, [
+            TestScene
+        ]);
+        bot.use(scene.init());
+        sceneLogger.info(`Successfully inited.`);
+    } catch(e: any) {
+        sceneLogger.error(`Failed initing: ${e.stack!}`);
+    }
+
+    const user = new UserMiddleware(logger);
+    bot.use(user.init());
     //
     bot.command('quit', (ctx) => {
         // Explicit usage
@@ -80,6 +96,7 @@ const init = async () => {
         await ctx.reply(`Hello 1 ${ctx.session.counter}`, Markup
             .inlineKeyboard([
                 Markup.button.callback('Test', 'callback_action'),
+                Markup.button.callback('Scene', 'test_callback'),
             ])
         )
         await next();
