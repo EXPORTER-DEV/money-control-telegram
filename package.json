@@ -9,7 +9,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start:dev": "nodemon --watch \"src/**\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node src/main\" | pino-pretty -c -t",
+    "start": "ts-node src/main --inspect",
+    "start:dev": "nodemon --inspect=0.0.0.0 --watch \"src/**\" --ignore \"src/**/*.spec.ts\" --exec \"ts-node src/main\" | pino-pretty -c -t",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
