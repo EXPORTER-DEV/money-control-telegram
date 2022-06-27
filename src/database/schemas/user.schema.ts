@@ -1,10 +1,13 @@
-import mongoose from "mongoose";
+import mongoose, { Document, PopulatedDoc, Types } from "mongoose";
+import { IAccountSchema } from "./account.schema";
 
 const Schema = mongoose.Schema;
 
 export interface IUserSchema {
+    _id: Types.ObjectId,
     id: number;
     rank: number;
+    accounts: Types.ObjectId[] | IAccountSchema[];
 }
 
 export const UserSchema = new Schema<IUserSchema>({
@@ -17,4 +20,8 @@ export const UserSchema = new Schema<IUserSchema>({
         type: Number, 
         default: 0
     },
+    accounts: [{
+        type: Schema.Types.ObjectId,
+        ref: "Account",
+    }]
 });
