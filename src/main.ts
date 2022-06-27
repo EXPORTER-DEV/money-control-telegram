@@ -21,7 +21,7 @@ import { TestScene } from './scenes/test.scene';
 import { HomeScene } from './scenes/home.scene';
 const config = Configuration();
 
-const bot = new Telegraf<IContext>(process.env.BOT_TOKEN || '');
+const bot = new Telegraf<IContext>(config.bot_token);
 
 let session: SessionMiddleware;
 let database: DatabaseMiddleware;
@@ -48,7 +48,7 @@ const init = async () => {
         sessionLogger.error(`Failed initing: ${e.stack!}`);
     }
 
-    const url = `mongodb://${config.mongo.username}:${config.mongo.password}@${config.mongo.host}:${config.mongo.port}`;
+    const url = `mongodb://${config.mongo.username}:${config.mongo.password}@${config.mongo.host}:${config.mongo.port}/${config.mongo.database}`;
     const mongoLogger = logger.child({
         module: 'MongoDB',
     });
@@ -65,7 +65,7 @@ const init = async () => {
     });
     try {
         databaseLogger.info(`Starting initing database models`);
-        const models = await load(connection);
+        const models = await load(connection, logger);
         database = new DatabaseMiddleware(models);
         bot.use(database.init());
         databaseLogger.info(`Successfully inited database models`);

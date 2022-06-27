@@ -1,4 +1,5 @@
 export interface IConfig {
+    bot_token: string;
     redis: {
         port: number;
         host: string;

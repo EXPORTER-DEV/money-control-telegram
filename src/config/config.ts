@@ -2,6 +2,7 @@ import { IConfig } from "./config.interface";
 
 export const Config = (): IConfig => {
     return {
+        bot_token: process.env.BOT_TOKEN!,
         redis: {
             port: parseInt(process.env.REDIS_PORT!) || 0,
             host: process.env.REDIS_HOST!,

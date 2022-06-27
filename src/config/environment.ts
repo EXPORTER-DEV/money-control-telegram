@@ -2,6 +2,8 @@ import { Type } from "class-transformer";
 import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class Environment {
+    @IsString()
+    BOT_TOKEN: string;
     // Redis start:
     @IsNumber()
     @Type(() => Number)
