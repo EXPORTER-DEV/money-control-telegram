@@ -27,7 +27,7 @@ export const AccountsScene = new Scene(
     Scene.default(async (ctx) => {
         const accountModel = ctx.database.inject<AccountModel>(AccountModel);
         ctx.session.scene.options = ctx.session.scene.options || {};
-        const sceneOptions = ctx.session.scene.options;
+        const sceneOptions: {offset: number, limit: number, count: number} = ctx.session.scene.options;
         if (ctx.textQuery !== undefined) {
             //
             const offset = sceneOptions.offset;
@@ -68,7 +68,10 @@ export const AccountsScene = new Scene(
         if (sceneOptions.offset === undefined) {
             sceneOptions.offset = 0;
         }
-        const accounts = await accountModel.findAllByUserId(ctx.user._id, sceneOptions.offset, pageLimit);
+        const accounts = await accountModel.findAllByUserId(ctx.user._id, {
+            offset: sceneOptions.offset, 
+            limit: pageLimit
+        });
 
         const buttons: InlineKeyboardButton[][] = [];
         const pageAccountButtons = accounts.items

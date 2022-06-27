@@ -1,14 +1,10 @@
 import { Document, Model, Types } from "mongoose";
 import { BaseModel } from "./base.model";
-import { AccountDto, AccountTypeEnum, IAccountSchema } from "../schemas/account.schema";
+import { AccountDto, IAccountSchema } from "../schemas/account.schema";
 import { IUserSchema } from "../schemas/user.schema";
 import { ILogger } from "../../lib/logger/logger";
 import { ITransactionSchema } from "../schemas/transaction.schema";
-
-export interface IFindAllPaginationResult {
-    items: AccountDto[];
-    count: number;
-}
+import { IPaginationOptions, IPaginationResult } from "./interfaces";
 
 export class AccountModel extends BaseModel {
     model: Model<IAccountSchema>;
@@ -23,7 +19,7 @@ export class AccountModel extends BaseModel {
     async findAll(): Promise<IAccountSchema[]> {
         return this.model.find({}).exec();
     }
-    async findAllByUserId(userId: Types.ObjectId, skip?: number, limit?: number): Promise<IFindAllPaginationResult> {
+    async findAllByUserId(userId: Types.ObjectId, paginationOptions: IPaginationOptions): Promise<IPaginationResult<AccountDto>> {
         const query = {user: new Types.ObjectId(userId)};
         const findQuery = this.model.aggregate<IAccountSchema>()
             .match(query)
@@ -37,8 +33,13 @@ export class AccountModel extends BaseModel {
                 transactionsTotal: {$sum: "$transactions.amount"},
             });
         const countQuery = this.model.find(query).count(query);
-        if (skip !== undefined && limit !== undefined) {
-            findQuery.skip(skip).limit(limit);
+        if (paginationOptions.offset !== undefined && paginationOptions.limit !== undefined) {
+            findQuery.skip(paginationOptions.offset).limit(paginationOptions.limit);
+        }
+        if (paginationOptions.sort) {
+            paginationOptions.sort.forEach(sort => 
+                findQuery.sort(sort)
+            );
         }
         const items = await findQuery.exec()
             .then(items => items.map(item => new AccountDto(item)));
@@ -48,9 +49,9 @@ export class AccountModel extends BaseModel {
             items,
         };
     }
-    async findOne(id: Types.ObjectId): Promise<AccountDto | undefined> {
+    async findOne(id: Types.ObjectId, userId: Types.ObjectId): Promise<AccountDto | undefined> {
         const find = await this.model.aggregate<IAccountSchema>()
-            .match({_id: new Types.ObjectId(id)})
+            .match({_id: new Types.ObjectId(id), user: new Types.ObjectId(userId)})
             .lookup({
                 from: 'transactions',
                 localField: 'transactions',
@@ -77,15 +78,18 @@ export class AccountModel extends BaseModel {
                 return account;
             } catch (err) {
                 this.logger.error({error: err, account}, `Failed create new account`);
-                throw new Error('FAILED_CREATE');
+                throw new Error('FAILED_CREATE_ACCOUNT');
             }
         } else {
-            this.logger.error(`Unknown user with _id ${options._id}, can't create new account`);
-            throw new Error('UNKNOWN_USER');
+            this.logger.error(`No user found with _id ${options._id}, can't create new account`);
+            throw new Error('NO_USER_FOUND');
         }
     }
     async delete(id: Types.ObjectId): Promise<boolean> {
-        const account = await this.model.findOne({_id: new Types.ObjectId(id)}).exec();
+        const account = await this.model.findOne({
+            _id: new Types.ObjectId(id)
+        }).exec();
+
         if (account !== null) {
             try {
                 const userId: Types.ObjectId = account.user instanceof Types.ObjectId ? account.user : account.user!._id;
@@ -98,7 +102,7 @@ export class AccountModel extends BaseModel {
                 return false;
             }
         } else { 
-            this.logger.error(`Unknown account with _id ${id}`);
+            this.logger.error(`No account found with _id ${id}`);
             return false;
         }
     }
