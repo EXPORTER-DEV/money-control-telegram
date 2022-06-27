@@ -1,14 +1,15 @@
 import { isNumber } from "class-validator";
+import { IContext } from "../../lib/bot.interface";
 import { ILogger } from "../../lib/logger/logger";
 import { Scene, SceneItem } from "./scene";
 import { ISceneInfo, IScenePositionResult, ISceneSessionContext, SceneItemEnum } from "./scene.interface";
 
 export class SceneController {
     constructor(
-        private ctx: ISceneSessionContext, 
+        private ctx: IContext, 
         private middleware: SceneMiddleware
     ){}
-    async join(name: string): Promise<boolean> {
+    async join(name: string, forceInit?: boolean): Promise<boolean> {
         await this.exit();
         const find = this.middleware.findScene(name);
         if(find !== undefined){
@@ -17,13 +18,19 @@ export class SceneController {
                 current: 0,
             };
             const joined = this.middleware.findScenePosition(find, SceneItemEnum.JOINED);
+            this.ctx.session!.scene = sceneInfo;
             if(joined !== undefined){
                 await Promise.all([
                     ...joined.items.map((item) => item.handler(this.ctx))
                 ]);
             }
-            this.middleware.logger.debug({user: this.ctx.from!.id}, `Joined scene "${sceneInfo.name}".`);
-            this.ctx.session!.scene = sceneInfo;
+            this.middleware.logger.debug({user: this.ctx.from!.id}, `Joined scene "${sceneInfo.name}", forceInit: ${forceInit ? 'true' : 'false'}.`);
+            if(forceInit === true){
+                const position = this.middleware.findScenePosition(find, SceneItemEnum.DEFAULT, sceneInfo.current);
+                if(position !== undefined){
+                    await position.items[0].handler(this.ctx);
+                }
+            }
             return true;
         }else{
             this.middleware.logger.warn({user: this.ctx.from!.id}, `Can't find scene "${name}".`);
@@ -90,7 +97,7 @@ export class SceneMiddleware {
     constructor(logger: ILogger, list: Scene[]){
         this.logger = logger.child({module: 'SceneMiddleware'});
         for(let item of list){
-            const check = this.list.find((item) => item.data.name === item.data.name || item.data.startQuery === item.data.startQuery);
+            const check = this.list.find((find) => find.data.name === item.data.name || find.data.startQuery === item.data.startQuery);
             if(check !== undefined){
                 const error = `Found duplicate for Scene "${item.data.name}", you can register only one scene with the same name or same startQuery.`;
                 this.logger.error(error);
@@ -101,7 +108,13 @@ export class SceneMiddleware {
         }
     }
     findSceneByQuery(query: string): Scene | undefined {
-        return this.list.find((item) => item.data.startQuery === query);
+        return this.list.find((item) => {
+            if(typeof item.data.startQuery === 'string'){
+                return item.data.startQuery === query;
+            }else if(item.data.startQuery !== undefined){
+                return item.data.startQuery!.indexOf(query) > -1;
+            }
+        });
     }
     findScene(name: string): Scene | undefined {
         return this.list.find((item) => item.data.name === name);
@@ -151,36 +164,33 @@ export class SceneMiddleware {
         return undefined;
     }
     init(){
-        return async (ctx: ISceneSessionContext, next: Function) => {
+        return async (ctx: IContext, next: Function) => {
             if (ctx.from) {
                 const sceneController = new SceneController(ctx, this);
                 ctx.scene = sceneController;
-                // Callback start
-                if(ctx.callbackQuery && ctx.callbackQuery.data){
-                    if(ctx.session?.scene === undefined){
-                        const find = this.findSceneByQuery(ctx.callbackQuery.data);
-                        if(find !== undefined){
-                            await sceneController.join(find.data.name);
-                            return;
+                // Callback query start
+                if(ctx.textQuery){
+                    const findByQuery = this.findSceneByQuery(ctx.textQuery);
+                    if(findByQuery !== undefined){
+                        await sceneController.join(findByQuery.data.name);
+                        return;
+                    }
+
+                    const find = this.findScene(ctx.session!.scene!.name);
+                    if(find !== undefined){
+                        const callback = this.findScenePosition(find, SceneItemEnum.CALLBACK);
+                        if(callback !== undefined){
+                            await Promise.all([
+                                callback.items.map((item) => item.handler(ctx))
+                            ])
                         }
                     }else{
-                        const find = this.findScene(ctx.session!.scene!.name);
-                        if(find !== undefined){
-                            const callback = this.findScenePosition(find, SceneItemEnum.CALLBACK);
-                            if(callback !== undefined){
-                                await Promise.all([
-                                    callback.items.map((item) => item.handler(ctx))
-                                ])
-                            }
-                        }else{
-                            await sceneController.exit();
-                        }
+                        await sceneController.exit();
                     }
                 }
-                // Callback end
+                // Callback query end
                 // Default start:
                 if(ctx.session?.scene !== undefined){
-                    console.dir(ctx.session);
                     const find = this.findScene(ctx.session!.scene!.name);
                     if(find !== undefined){
                         const result = this.findScenePosition(find, SceneItemEnum.DEFAULT, ctx.session!.scene!.current);

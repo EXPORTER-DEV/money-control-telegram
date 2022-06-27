@@ -1,4 +1,5 @@
 import { Context } from "telegraf";
+import { IContext } from "../../lib/bot.interface";
 import { SceneItem } from "./scene";
 import { SceneController } from "./scene.middleware";
 
@@ -10,7 +11,7 @@ export interface ISceneInfo {
 
 export interface ISceneCreation {
     name: string;
-    startQuery?: string;
+    startQuery?: string | string[];
 }
 
 export interface IScene {
@@ -33,7 +34,7 @@ export interface IScenePositionResult {
     index?: number;
 }
 
-export type SceneItemHandlerType = (ctx: ISceneSessionContext) => Promise<any>;
+export type SceneItemHandlerType = (ctx: IContext) => Promise<any>;
 
 export enum SceneItemEnum {
     JOINED = "JOINED",
