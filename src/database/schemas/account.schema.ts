@@ -32,6 +32,7 @@ export interface IAccountSchema {
     transactions: Types.ObjectId[] | ITransactionSchema[];
     transactionsTotal: number;
     currency: AccountCurrencyEnum;
+    purpose?: number;
 }
 
 export class AccountDto implements IAccountSchema {
@@ -42,6 +43,7 @@ export class AccountDto implements IAccountSchema {
     transactions: Types.ObjectId[] | ITransactionSchema[];
     transactionsTotal: number;
     currency: AccountCurrencyEnum;
+    purpose: number;
     constructor(data: IAccountSchema){
         Object.assign(this, {
             ...data,
@@ -72,5 +74,8 @@ export const AccountSchema = new Schema<IAccountSchema>({
     currency: {
         type: String,
         default: AccountCurrencyEnum.RUB,
+    },
+    purpose: {
+        type: Number 
     }
 });

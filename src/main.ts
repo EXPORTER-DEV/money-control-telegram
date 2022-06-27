@@ -20,6 +20,7 @@ import { SCENE_QUERY } from './navigation/scene-query';
 import { TestScene } from './scenes/test.scene';
 import { HomeScene } from './scenes/home.scene';
 import { AccountsScene } from './scenes/accounts.scene';
+import { ManageAccountScene } from './scenes/manage-account.scene';
 const config = Configuration();
 
 const bot = new Telegraf<IContext>(config.bot_token);
@@ -87,6 +88,7 @@ const init = async () => {
             TestScene,
             HomeScene,
             AccountsScene,
+            ManageAccountScene
         ]);
         bot.use(scene.init());
         sceneLogger.info(`Successfully inited.`);

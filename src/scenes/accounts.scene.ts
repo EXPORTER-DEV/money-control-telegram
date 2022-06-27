@@ -1,7 +1,7 @@
 import { Markup } from "telegraf";
 import { InlineKeyboardButton, InlineKeyboardMarkup } from "telegraf/typings/core/types/typegram";
 import { AccountModel } from "../database/models/account.model";
-import { AccountCurrency, AccountType } from "../database/schemas/account.schema";
+import { AccountCurrency, AccountType, AccountTypeEnum } from "../database/schemas/account.schema";
 import { Scene } from "../middlewares/scene/scene";
 import { BUTTON } from "../navigation/button";
 import { SCENE_QUERY } from "../navigation/scene-query";
@@ -16,12 +16,9 @@ export const AccountsScene = new Scene(
     Scene.joined(async (ctx) => {
         await ctx.scene.jump(0, true);
     }),
-    Scene.exited(async (ctx) => {
-        await ctx.scene.join(SCENE_QUERY.home);
-    }),
     Scene.callback(async (ctx) => {
         if(ctx.textQuery === SCENE_QUERY.pagination_close){
-            await ctx.scene.exit();
+            await ctx.scene.join(SCENE_QUERY.home);
             return;
         }
     }),
@@ -58,6 +55,10 @@ export const AccountsScene = new Scene(
                 //
                 return;
             }
+            if(ctx.textQuery === SCENE_QUERY.create_new){
+                await ctx.scene.join(SCENE_QUERY.manage_account, {creation: true, referer: SCENE_QUERY.accounts});
+                return;
+            }
         }
         if(sceneOptions.offset === undefined){
             sceneOptions.offset = 0;
@@ -68,7 +69,7 @@ export const AccountsScene = new Scene(
         const pageAccountButtons = accounts.items
             .map(account => 
                 Markup.button.callback(
-                    `${AccountType[account.type]} - ${account.name} - ${account.transactionsTotal} ${AccountCurrency[account.currency]}`, 
+                    `${AccountType[account.type]} - ${account.name} - ${account.transactionsTotal} ${account.type === AccountTypeEnum.PURPOSE && account.purpose ? `/ ${account.purpose} (${Math.round((account.transactionsTotal/account.purpose)*100)}%)` : ``} ${AccountCurrency[account.currency]}`, 
                     `/account ${account._id}`
                 )
             );
