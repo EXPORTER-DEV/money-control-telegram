@@ -11,12 +11,12 @@ export class CatchErrorMiddleware {
         this.logger = logger.child({module: 'CatchErrorMiddleware'});
     }
     init(){
-        return async (ctx: Context, next: Function) => {
+        return async (ctx: Context, next: () => void) => {
             try {
                 await next();
             } catch (e: any) {
                 this.logger.error({stack: e.stack!}, 'Got error while bot handling');
             }
-        }
+        };
     }
 }

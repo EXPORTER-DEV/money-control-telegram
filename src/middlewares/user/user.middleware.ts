@@ -1,4 +1,3 @@
-import { plainToInstance } from "class-transformer";
 import { UserModel } from "../../database/models/user.model";
 import { ILogger } from "../../lib/logger/logger";
 import { IDatabaseContext } from "../database/database.interface";
@@ -9,7 +8,7 @@ export class UserMiddleware {
         this.logger = logger.child({module: 'User'});
     }
     init(){
-        return async (ctx: IDatabaseContext, next: Function) => {
+        return async (ctx: IDatabaseContext, next: () => void) => {
             if(ctx.from){
                 const userModel = ctx.database!.inject<UserModel>(UserModel);
                 try {
@@ -25,6 +24,6 @@ export class UserMiddleware {
                 }
             }
             await next();
-        }
+        };
     }
 }

@@ -8,7 +8,7 @@ import { ITextQueryContext } from "./text-query.interface";
  * @param next 
  * @returns 
  */
-export const TextQueryMiddleware = async (ctx: ITextQueryContext, next: Function) => {
+export const TextQueryMiddleware = async (ctx: ITextQueryContext, next: () => void) => {
     if(ctx.from){
         if(ctx.callbackQuery){
             ctx.textQuery = ctx.callbackQuery.data;
@@ -19,4 +19,4 @@ export const TextQueryMiddleware = async (ctx: ITextQueryContext, next: Function
         }
     }
     return next();
-}
+};

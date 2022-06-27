@@ -7,4 +7,4 @@ export const KEYBOARD = {
         BUTTON.ABOUT_BOT,
         BUTTON.HOME,
     ])
-}
+};

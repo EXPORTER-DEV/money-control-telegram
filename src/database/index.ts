@@ -7,4 +7,4 @@ export const load = (connection: Mongoose) => {
     return {
         UserModel: new UserModel(User),
     };
-}
+};

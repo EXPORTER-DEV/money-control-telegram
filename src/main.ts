@@ -79,7 +79,7 @@ const init = async () => {
 
     const sceneLogger = logger.child({
         module: 'SceneMiddleware',
-    })
+    });
     try {
         sceneLogger.info(`Initing`);
         const scene = new SceneMiddleware(logger, [
@@ -97,8 +97,8 @@ const init = async () => {
         //   ctx.telegram.leaveChat(ctx.message.chat.id)
     
         // Using context shortcut
-        ctx.leaveChat()
-    })
+        ctx.leaveChat();
+    });
 
 
     bot.command('/start', async (ctx, next) => {
@@ -124,12 +124,17 @@ const init = async () => {
         await ctx.editMessageText('test');
         return next();
     });
+
+    bot.command('account', async (ctx, next) => {
+        console.dir(ctx.message);
+        return next();
+    });
     //
 
     bot.launch();
     
-    process.once('SIGINT', () => bot.stop('SIGINT'))
-    process.once('SIGTERM', () => bot.stop('SIGTERM'))
+    process.once('SIGINT', () => bot.stop('SIGINT'));
+    process.once('SIGTERM', () => bot.stop('SIGTERM'));
 };
 
 init();

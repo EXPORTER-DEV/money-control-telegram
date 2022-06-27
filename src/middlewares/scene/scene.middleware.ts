@@ -96,7 +96,7 @@ export class SceneMiddleware {
     readonly logger: ILogger;
     constructor(logger: ILogger, list: Scene[]){
         this.logger = logger.child({module: 'SceneMiddleware'});
-        for(let item of list){
+        for(const item of list){
             const check = this.list.find((find) => find.data.name === item.data.name || find.data.startQuery === item.data.startQuery);
             if(check !== undefined){
                 const error = `Found duplicate for Scene "${item.data.name}", you can register only one scene with the same name or same startQuery.`;
@@ -148,23 +148,23 @@ export class SceneMiddleware {
         if(type === SceneItemEnum.EXITED && scene.exited.length > 0){
             return {
                 items: scene.exited,
-            }
+            };
         }
         if(type === SceneItemEnum.JOINED && scene.joined.length > 0){
             return {
                 items: scene.joined,
-            }
+            };
         }
         if(type === SceneItemEnum.CALLBACK && scene.callback.length > 0){
             return {
                 items: scene.callback,
-            }
+            };
         }
 
         return undefined;
     }
     init(){
-        return async (ctx: IContext, next: Function) => {
+        return async (ctx: IContext, next: () => void) => {
             if (ctx.from) {
                 const sceneController = new SceneController(ctx, this);
                 ctx.scene = sceneController;
@@ -182,7 +182,7 @@ export class SceneMiddleware {
                         if(callback !== undefined){
                             await Promise.all([
                                 callback.items.map((item) => item.handler(ctx))
-                            ])
+                            ]);
                         }
                     }else{
                         await sceneController.exit();
@@ -209,6 +209,6 @@ export class SceneMiddleware {
             } else {
                 await next();
             }
-        }
+        };
     }
 }

@@ -16,5 +16,5 @@ export const Config = (): IConfig => {
             password: process.env.MONGO_PASSWORD!,
             database: process.env.MONGO_DATABASE!,
         }
-    }
-}
+    };
+};

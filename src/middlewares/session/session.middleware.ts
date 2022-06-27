@@ -1,4 +1,3 @@
-import { Context } from "telegraf";
 import Redis from 'ioredis';
 import { Config, IConfig, ISessionContext } from "./session.interface";
 import { ILogger } from "../../lib/logger/logger";
@@ -69,7 +68,7 @@ export class SessionMiddleware {
         }
     }
     init(){
-        return async (ctx: ISessionContext, next: Function) => {
+        return async (ctx: ISessionContext, next: () => void) => {
             if(ctx.from){
                 const session = await this.get(ctx.from.id);
                 ctx.session = session;
@@ -78,6 +77,6 @@ export class SessionMiddleware {
             }else{
                 await next();
             }
-        }
+        };
     }
 }

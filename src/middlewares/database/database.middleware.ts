@@ -15,13 +15,13 @@ export class DatabaseMiddleware {
         return this.models[modelName] as T;
     }
     init(){
-        return async (ctx: IDatabaseContext, next: Function) => {
+        return async (ctx: IDatabaseContext, next: () => void) => {
             if(ctx.from){
                 ctx.database = this;
                 await next();
             }else{
                 await next();
             }
-        }
+        };
     }
 }
