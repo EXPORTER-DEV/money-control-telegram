@@ -1,4 +1,5 @@
 import mongoose, { Document, PopulatedDoc, Types } from "mongoose";
+import { ITransactionSchema } from "./transaction.schema";
 import { IUserSchema } from "./user.schema";
 
 const Schema = mongoose.Schema;
@@ -13,6 +14,7 @@ export interface IAccountSchema {
     user: PopulatedDoc<Document<Types.ObjectId> & IUserSchema>;
     type: AccountTypeEnum;
     name: string;
+    transactions: Types.ObjectId[] | ITransactionSchema[];
 }
 
 export const AccountSchema = new Schema<IAccountSchema>({
@@ -28,5 +30,9 @@ export const AccountSchema = new Schema<IAccountSchema>({
     name: {
         type: String,
         required: true,
-    }
+    },
+    transactions: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Transaction'
+    }]
 });

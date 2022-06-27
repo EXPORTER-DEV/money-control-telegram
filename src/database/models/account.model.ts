@@ -4,7 +4,10 @@ import { AccountTypeEnum, IAccountSchema } from "../schemas/account.schema";
 import { IUserSchema } from "../schemas/user.schema";
 import { ILogger } from "../../lib/logger/logger";
 
-
+export interface IFindAllPaginationResult {
+    items: IAccountSchema[];
+    count: number;
+}
 
 export class AccountModel extends BaseModel {
     model: Model<IAccountSchema>;
@@ -17,13 +20,29 @@ export class AccountModel extends BaseModel {
     async findAll(): Promise<IAccountSchema[]> {
         return this.model.find({}).exec();
     }
-    async findAllByUserId(userId: Types.ObjectId, skip?: number, limit?: number): Promise<IAccountSchema[]> {
-        const findQuery = this.model.find({userId});
+    async findAllByUserId(userId: Types.ObjectId, skip?: number, limit?: number): Promise<IFindAllPaginationResult> {
+        const query = {user: userId};
+        const findQuery = this.model.aggregate()
+            .match(query)
+            .lookup({
+                from: 'transactions',
+                localField: 'transactions',
+                foreignField: 'account',
+                as: 'transactions',
+            })
+            .addFields({
+                transactionsTotal: {$sum: "$transactions.amount"},
+            });
+        const countQuery = this.model.find(query).count(query);
         if(skip !== undefined && limit !== undefined){
-            findQuery.skip(skip).limit(skip);
+            findQuery.skip(skip).limit(limit);
         }
-        const find = await findQuery.exec();
-        return find;
+        const items = await findQuery.exec();
+        const count = await countQuery.exec();
+        return {
+            count,
+            items,
+        };
     }
     async create(userId: Types.ObjectId, type: AccountTypeEnum, name: string): Promise<Document<unknown, any, IAccountSchema>> {
         const user = await this.userModel.findOne({_id: userId}).exec();

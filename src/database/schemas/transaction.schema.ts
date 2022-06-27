@@ -1,4 +1,5 @@
 import { Schema, Types } from "mongoose";
+import { IAccountSchema } from "./account.schema";
 
 export enum TransactionTypeEnum {
     INCOME = 'INCOME',
@@ -7,7 +8,7 @@ export enum TransactionTypeEnum {
 
 export interface ITransactionSchema {
     id: Types.ObjectId;
-    accountId: Types.ObjectId;
+    account: Types.ObjectId | IAccountSchema;
     type: TransactionTypeEnum;
     amount: number;
     createdAt: number;
@@ -20,11 +21,12 @@ export const TransactionSchema = new Schema<ITransactionSchema>({
         index: true,
         unique: true,
     },
-    accountId: {
+    account: {
         type: Schema.Types.ObjectId,
-        index: true,
         ref: 'Account',
-        foreign_key: '',
+    },
+    amount: {
+        type: Number,
         required: true,
     },
     type: {
