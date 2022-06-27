@@ -25,7 +25,7 @@ export class SceneController {
                     ...joined.items.map((item) => item.handler(this.ctx))
                 ]);
             }
-            this.middleware.logger.debug({user: this.ctx.from!.id}, `Joined scene "${sceneInfo.name}", forceInit: ${forceInit ? 'true' : 'false'}.`);
+            this.middleware.logger.debug({user: this.ctx.from!.id}, `Joined scene "${sceneInfo.name}", forceInit: ${forceInit ? 'true' : 'false'}, options: ${options ? JSON.stringify(options) : 'null'}`);
             if(forceInit === true){
                 const position = this.middleware.findScenePosition(find, SceneItemEnum.DEFAULT, sceneInfo.current);
                 if(position !== undefined){
@@ -38,11 +38,11 @@ export class SceneController {
         }
         return false;
     }
-    async next(forceInit?: boolean){
+    async next(step: number = 1, forceInit?: boolean){
         if(this.ctx.session!.scene !== undefined){
             const find = this.middleware.findScene(this.ctx.session!.scene!.name);
             if(find !== undefined){
-                const nextPosition = this.ctx.session!.scene!.current + 1;
+                const nextPosition = this.ctx.session!.scene!.current + step;
                 const position = this.middleware.findScenePosition(find, SceneItemEnum.DEFAULT, nextPosition);
                 if(position !== undefined && position.items.length > 0){
                     this.ctx.session!.scene.current = nextPosition;
@@ -177,16 +177,20 @@ export class SceneMiddleware {
                         return;
                     }
 
-                    const find = this.findScene(ctx.session!.scene!.name);
+                    const find = this.findScene(ctx.session?.scene?.name);
                     if(find !== undefined){
                         const current = ctx.session.scene.name;
                         const callback = this.findScenePosition(find, SceneItemEnum.CALLBACK);
                         if(callback !== undefined){
-                            await Promise.all([
-                                callback.items.map((item) => item.handler(ctx))
+                            const result = await Promise.all([
+                                ...callback.items.map((item) => item.handler(ctx))
                             ]);
                             // In case when Scene.callback has exited current scene or moved to another, then stop execution.
-                            if(current !== ctx.session.scene.name){
+                            if(current !== ctx.session.scene?.name){
+                                return;
+                            }
+                            // If one of result item is false, then stop execution:
+                            if(result.some(res => res === false)){
                                 return;
                             }
                         }
