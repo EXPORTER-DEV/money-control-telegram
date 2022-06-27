@@ -2,6 +2,7 @@ import { Markup, Telegraf } from 'telegraf';
 import 'dotenv/config';
 import "reflect-metadata";
 
+import CatchErrorMiddleware from './middlewares/catch-error';
 import SessionMiddleware from './middlewares/session';
 import DatabaseMiddleware from './middlewares/database';
 import UserMiddleware from './middlewares/user';
@@ -18,7 +19,6 @@ import { SCENE_QUERY } from './navigation/scene-query';
 
 import { TestScene } from './scenes/test.scene';
 import { HomeScene } from './scenes/home.scene';
-
 const config = Configuration();
 
 const bot = new Telegraf<IContext>(process.env.BOT_TOKEN || '');
@@ -31,6 +31,9 @@ let connection: Mongoose;
 logger.info(`Using config: ${JSON.stringify(config)}`);
 
 const init = async () => {
+    const catchError = new CatchErrorMiddleware(logger);
+    bot.use(catchError.init());
+    
     const sessionLogger = logger.child({
         module: 'SessionMiddleware'
     });
