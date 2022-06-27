@@ -79,13 +79,13 @@ export class SceneController {
             const find = this.middleware.findScene(this.ctx.session!.scene!.name);
             if(find !== undefined){
                 const exited = this.middleware.findScenePosition(find, SceneItemEnum.EXITED);
+                this.middleware.logger.debug({user: this.ctx.from!.id}, `Exited scene "${this.ctx.session!.scene!.name}" from position "${this.ctx.session!.scene!.current}".`);
+                this.ctx.session!.scene = undefined;
                 if(exited !== undefined){
                     await Promise.all([
                         ...exited.items.map((item) => item.handler(this.ctx))
                     ]);
                 }
-                this.middleware.logger.debug({user: this.ctx.from!.id}, `Exited scene "${this.ctx.session!.scene!.name}" from position "${this.ctx.session!.scene!.current}".`);
-                this.ctx.session!.scene = undefined;
             }
         }
     }
@@ -178,11 +178,16 @@ export class SceneMiddleware {
 
                     const find = this.findScene(ctx.session!.scene!.name);
                     if(find !== undefined){
+                        const current = ctx.session.scene.name;
                         const callback = this.findScenePosition(find, SceneItemEnum.CALLBACK);
                         if(callback !== undefined){
                             await Promise.all([
                                 callback.items.map((item) => item.handler(ctx))
                             ]);
+                            // In case when Scene.callback has exited current scene or moved to another, then stop execution.
+                            if(current !== ctx.session.scene.name){
+                                return;
+                            }
                         }
                     }else{
                         await sceneController.exit();
