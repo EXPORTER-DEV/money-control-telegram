@@ -104,7 +104,7 @@ export class SceneMiddleware {
                 throw new Error(error);
             }
             this.list.push(item);
-            this.logger.info({scene: JSON.stringify(item)}, `Registered scene "${item.data.name}", startQuery: "${item.data.startQuery ?? 'false'}", joined events: ${item.joined.length}, exited events: ${item.exited.length}, callback events: ${item.callback.length}, default handlers: ${item.items.length}`);
+            this.logger.info({scene: JSON.stringify(item)}, `Registered scene "${item.data.name}", startQuery: ${item.data.startQuery ? `[${[...(item.data.startQuery instanceof Array ? item.data.startQuery : [item.data.startQuery])].map((item) => `"${item}"`).join(',')}]`:  'false'}, joined events: ${item.joined.length}, exited events: ${item.exited.length}, callback events: ${item.callback.length}, default handlers: ${item.items.length}`);
         }
     }
     findSceneByQuery(query: string): Scene | undefined {
