@@ -7,20 +7,37 @@ export enum TransactionTypeEnum {
 }
 
 export interface ITransactionSchema {
-    id: Types.ObjectId;
+    _id: Types.ObjectId;
     account: Types.ObjectId | IAccountSchema;
     type: TransactionTypeEnum;
     amount: number;
+    user: Types.ObjectId;
     createdAt: number;
     updatedAt: number;
 }
 
+export class TransactionDto implements ITransactionSchema {
+    _id: Types.ObjectId;
+    account: Types.ObjectId | IAccountSchema;
+    type: TransactionTypeEnum;
+    amount: number;
+    user: Types.ObjectId;
+    createdAt: number;
+    updatedAt: number;
+    constructor(data: ITransactionSchema) {
+        Object.assign(this, {
+            _id: data._id,
+            account: data.account,
+            type: data.type,
+            amount: data.amount,
+            user: data.user,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+        });
+    }
+}
+
 export const TransactionSchema = new Schema<ITransactionSchema>({
-    id: {
-        type: Schema.Types.ObjectId,
-        index: true,
-        unique: true,
-    },
     account: {
         type: Schema.Types.ObjectId,
         ref: 'Account',
@@ -33,6 +50,10 @@ export const TransactionSchema = new Schema<ITransactionSchema>({
         type: String,
         default: TransactionTypeEnum.INCOME,
         required: true,
+    },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
     },
 }, {
     timestamps: { currentTime: () => Date.now() }
