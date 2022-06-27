@@ -13,7 +13,7 @@ export const load = (connection: Mongoose, logger: ILogger) => {
     const Transaction = connection.model<ITransactionSchema>('Transaction', TransactionSchema);
     return {
         UserModel: new UserModel(User, logger),
-        Account: new AccountModel(Account, User, logger),
-        Transaction: new TransactionModel(Transaction, logger),
+        AccountModel: new AccountModel(Account, User, logger),
+        TransactionModel: new TransactionModel(Transaction, logger),
     };
 };
