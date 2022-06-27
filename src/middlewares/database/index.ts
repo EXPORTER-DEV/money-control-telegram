@@ -1,3 +1,3 @@
-import { Database } from "./database";
+import { DatabaseMiddleware } from "./database.middleware";
 
-export default Database;
+export default DatabaseMiddleware;

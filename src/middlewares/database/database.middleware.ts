@@ -1,8 +1,7 @@
 import { BaseModel } from "../../database/models/base.model";
-import { ISessionContext } from "../session/session.interface";
 import { IDatabaseContext } from "./database.interface";
 
-export class Database {
+export class DatabaseMiddleware {
     models: Record<string, BaseModel>;
     constructor(models: Record<string, BaseModel>){
         this.models = models;

@@ -1,6 +1,6 @@
 import { Context } from "telegraf";
-import { Database } from "./database";
+import { DatabaseMiddleware } from "./database.middleware";
 
 export interface IDatabaseContext extends Context {
-    database?: Database;
+    database?: DatabaseMiddleware;
 }

@@ -3,12 +3,12 @@ import Redis from 'ioredis';
 import { Config, IConfig, ISessionContext } from "./session.interface";
 import { ILogger } from "../../lib/logger/logger";
 
-export class Session {
+export class SessionMiddleware {
     connection: Redis;
     key: string;
     logger: ILogger;
     constructor(data: IConfig, logger: ILogger){
-        this.logger = logger.child({module: 'Session'});
+        this.logger = logger.child({module: 'SessionMiddleware'});
         this.logger.info('Constructing');
         const config = new Config(data);
         this.key = config.key;

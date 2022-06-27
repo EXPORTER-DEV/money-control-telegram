@@ -3,7 +3,7 @@ import { UserModel } from "../../database/models/user.model";
 import { ILogger } from "../../lib/logger/logger";
 import { IDatabaseContext } from "../database/database.interface";
 
-export class User {
+export class UserMiddleware {
     logger: ILogger;
     constructor(logger: ILogger){
         this.logger = logger.child({module: 'User'});
@@ -15,7 +15,8 @@ export class User {
                 try {
                     const find = await userModel.findById(ctx.from.id);
                     if(find !== undefined){
-                        const user = plainToInstance(userModel.model, {id: ctx.from.id});
+                        const user = new userModel.model();
+                        user.id = ctx.from.id;
                         await user.save();
                         this.logger.info(`Successfully saved ${user.id} user.`);
                     }
