@@ -20,4 +20,22 @@ export class Environment {
     @IsNumber()
     @Type(() => Number)
     REDIS_DATABASE: number;
+
+    // Mongo start:
+    @IsNumber()
+    @Type(() => Number)
+    MONGO_PORT: number;
+
+    @IsString()
+    MONGO_HOST: string;
+
+    @IsString()
+    @IsOptional()
+    MONGO_USERNAME: string;
+
+    @IsString()
+    MONGO_PASSWORD: string;
+
+    @IsString()
+    MONGO_DATABASE: number;
 }

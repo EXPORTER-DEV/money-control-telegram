@@ -5,8 +5,20 @@ import { Session } from './middlewares/session/session';
 import Configuration from './config';
 import logger from './lib/logger/logger';
 import { IContext } from './lib/bot.interface';
+import mongoose from 'mongoose';
+import { IUserSchema, UserSchema } from './schemas/user.schema';
 
 const config = Configuration();
+
+(async () => {
+    const url = `mongodb://${config.mongo.username}:${config.mongo.password}@${config.mongo.host}:${config.mongo.port}`;
+    logger.info(`Using Mongo URL: ${url}`);
+    const connection = await mongoose.connect(url);
+    const UserModel = mongoose.model<IUserSchema>('UserModel', UserSchema);
+    const user = new UserModel();
+    user.id = 1;
+    await user.save();//
+})()
 
 logger.info(`Using config: ${JSON.stringify(config)}`);
 
