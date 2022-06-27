@@ -4,9 +4,11 @@ import { AccountModel } from "../database/models/account.model";
 import { AccountCurrency, AccountType, AccountTypeEnum } from "../database/schemas/account.schema";
 import { Scene } from "../middlewares/scene/scene";
 import { BUTTON } from "../navigation/button";
+import { BUTTON_QUERY } from "../navigation/button-query";
 import { SCENE_QUERY } from "../navigation/scene-query";
+import { CONSTANTS } from "./constants";
 
-const pageLimit = 6;
+const pageLimit = CONSTANTS.PAGE_ACCOUNTS_LIMIT;
 
 export const AccountsScene = new Scene(
     {
@@ -17,9 +19,9 @@ export const AccountsScene = new Scene(
         await ctx.scene.jump(0, true);
     }),
     Scene.callback(async (ctx) => {
-        if (ctx.textQuery === SCENE_QUERY.pagination_close) {
+        if (ctx.textQuery === BUTTON_QUERY.pagination_close) {
             await ctx.scene.join(SCENE_QUERY.home);
-            return;
+            return false;
         }
     }),
     Scene.default(async (ctx) => {
@@ -30,7 +32,7 @@ export const AccountsScene = new Scene(
             //
             const offset = sceneOptions.offset;
             const count = sceneOptions.count;
-            if (ctx.textQuery === SCENE_QUERY.pagination_back && offset !== undefined && count !== undefined) {
+            if (ctx.textQuery === BUTTON_QUERY.pagination_back && offset !== undefined && count !== undefined) {
                 if (offset - pageLimit >= 0) {
                     sceneOptions.offset -= pageLimit;
                 } else {
@@ -38,8 +40,8 @@ export const AccountsScene = new Scene(
                     return;
                 }
             }
-            if (ctx.textQuery === SCENE_QUERY.pagination_next && offset !== undefined && count !== undefined) {
-                if (offset + pageLimit <= count) {
+            if (ctx.textQuery === BUTTON_QUERY.pagination_next && offset !== undefined && count !== undefined) {
+                if (offset + pageLimit < count) {
                     sceneOptions.offset += pageLimit;
                 } else {
                     await ctx.answerCbQuery('No next pages.').catch();
@@ -49,14 +51,17 @@ export const AccountsScene = new Scene(
             const currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
             const maxPage = Math.ceil(count / pageLimit);
             if (count !== undefined && offset !== undefined && currentPage > maxPage) {
-                sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit);
+                sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit) * pageLimit;
             }
             if (ctx.textQuery.indexOf('/account') === 0) {
-                //
+                const id = ctx.textQuery.split(/\s/)[1];
+                if (id !== undefined) {
+                    await ctx.scene.join(SCENE_QUERY.manage_account, {param: {id}, referer: SCENE_QUERY.manage_account, options: ctx.session.scene});
+                }
                 return;
             }
-            if (ctx.textQuery === SCENE_QUERY.create_new) {
-                await ctx.scene.join(SCENE_QUERY.manage_account, {creation: true, referer: SCENE_QUERY.accounts});
+            if (ctx.textQuery === BUTTON_QUERY.create_new) {
+                await ctx.scene.join(SCENE_QUERY.create_account, {referer: SCENE_QUERY.accounts, options: ctx.session.scene});
                 return;
             }
         }

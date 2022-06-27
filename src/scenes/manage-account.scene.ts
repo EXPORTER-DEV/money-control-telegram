@@ -1,9 +1,19 @@
 import { Markup } from "telegraf";
 import { AccountModel } from "../database/models/account.model";
-import { AccountCurrency, AccountType, AccountTypeEnum } from "../database/schemas/account.schema";
+import { AccountCurrency, AccountDto, AccountType, AccountTypeEnum } from "../database/schemas/account.schema";
 import { Scene } from "../middlewares/scene/scene";
 import { BUTTON } from "../navigation/button";
+import { BUTTON_QUERY } from "../navigation/button-query";
 import { SCENE_QUERY } from "../navigation/scene-query";
+import { IContext } from "../lib/bot.interface";
+
+const exit = async (ctx: IContext) => {
+    if (ctx.session.scene?.referer === undefined) {
+        await ctx.scene.join(SCENE_QUERY.home);
+    } else {
+        await ctx.scene.join(ctx.session.scene.referer, ctx.session.scene.options ?? {});
+    }
+};
 
 export const ManageAccountScene = new Scene(
     {
@@ -11,67 +21,49 @@ export const ManageAccountScene = new Scene(
         startQuery: [SCENE_QUERY.manage_account, '/manage-account'],
     },
     Scene.joined(async (ctx) => {
+        if (ctx.session.scene.param?.id) {
+            const accountModel = ctx.database.inject<AccountModel>(AccountModel);
+            const account = await accountModel.findOne(ctx.session.scene.param?.id);
+            if (account === undefined) {
+                ctx.textQuery = undefined;
+                await ctx.reply(`❗️ Can't find account.`);
+                return exit(ctx);
+            } else {
+                ctx.session.scene.account = account;
+            }
+        }
         await ctx.scene.jump(0, true);
     }),
     Scene.callback(async (ctx) => {
-        if (ctx.textQuery === SCENE_QUERY.pagination_close) {
-            if (ctx.session.scene?.referer === undefined) {
-                await ctx.scene.join(SCENE_QUERY.home);
-            } else {
-                await ctx.scene.join(ctx.session.scene.referer);
-            }
+        if (ctx.textQuery === BUTTON_QUERY.pagination_close) {
+            await exit(ctx);
             return false;
         }
-        if (ctx.textQuery === SCENE_QUERY.pagination_back) {
+        if (ctx.textQuery === BUTTON_QUERY.pagination_back) {
+            ctx.session.scene.action = 'back';
             await ctx.scene.next(-1, true);
             return false;
         }
     }),
     Scene.default(async (ctx) => {
-        await ctx.reply('Please enter the name of new account', Markup.inlineKeyboard([
-            BUTTON.PAGINATION_CLOSE
+        const account: AccountDto = ctx.session.scene.account;
+        await ctx.reply(`Please select action for ${AccountType[account.type]} - ${account.name} - ${account.transactionsTotal} ${account.type === AccountTypeEnum.PURPOSE && account.purpose ? `/ ${account.purpose} ${AccountCurrency[account.currency]} (${Math.round((account.transactionsTotal/account.purpose)*100)}%)` : `${AccountCurrency[account.currency]}`}`, Markup.inlineKeyboard([
+            [BUTTON.SHOW_TRANSACTION],
+            [BUTTON.EDIT, BUTTON.DELETE],
+            [BUTTON.PAGINATION_CLOSE]
         ]));
         await ctx.scene.next(1);
     }),
     Scene.default(async (ctx) => {
-        if (ctx.session.scene.account?.name 
-            && ctx.textQuery 
-            && [SCENE_QUERY.account_accumulative_type, SCENE_QUERY.account_purpose_type].includes(ctx.textQuery)) {
-            ctx.session.scene.account.type = SCENE_QUERY.account_accumulative_type === ctx.textQuery ? 
-                AccountTypeEnum.ACCUMULATIVE : 
-                AccountTypeEnum.PURPOSE;
-            return ctx.scene.next(1, true);
-        }
-        if (!ctx.message || !("text" in ctx.message)) return ctx.scene.next(-1, true);
-        if (ctx.message.text.replace(/\s/gi, '').length === 0) return ctx.scene.next(-1, true);
-        ctx.session.scene.account = {
-            name: ctx.message.text
-        };
-        await ctx.reply(`Please select type of new «${ctx.message.text}» account`, Markup.inlineKeyboard([
-            [
-                BUTTON.ACCOUNT_ACCUMULATIVE_TYPE,
-                BUTTON.ACCOUNT_PURPOSE_TYPE
-            ], 
-            [
-                BUTTON.PAGINATION_BACK,
-                BUTTON.PAGINATION_CLOSE
-            ]
-        ]));
-    }),
-    Scene.default(async (ctx) => {
-        if (ctx.session.account.type === AccountTypeEnum.PURPOSE) {
-            await ctx.reply('Please enter the target amount for new purpose account', Markup.inlineKeyboard([
-                [
-                    BUTTON.ACCOUNT_ACCUMULATIVE_TYPE,
-                    BUTTON.ACCOUNT_PURPOSE_TYPE
-                ], 
-                [
-                    BUTTON.PAGINATION_BACK,
-                    BUTTON.PAGINATION_CLOSE
-                ]
-            ]));
+        if (ctx.textQuery && [BUTTON_QUERY.edit, BUTTON_QUERY.delete, BUTTON.SHOW_TRANSACTION].includes(ctx.textQuery)) {
+            if (ctx.textQuery === BUTTON_QUERY.edit) {
+                await ctx.scene.join(SCENE_QUERY.edit_account, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
+            }
+            if (ctx.textQuery === BUTTON_QUERY.delete) {
+                await ctx.scene.join(SCENE_QUERY.delete_account, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
+            }
         } else {
-            //
+            await ctx.scene.next(-1, true);
         }
-    })
+    }),
 );

@@ -21,6 +21,10 @@ import { TestScene } from './scenes/test.scene';
 import { HomeScene } from './scenes/home.scene';
 import { AccountsScene } from './scenes/accounts.scene';
 import { ManageAccountScene } from './scenes/manage-account.scene';
+import { CreateAccountScene } from './scenes/create-account.scene';
+import { EditAccountScene } from './scenes/edit-account.scene';
+import { DeleteAccountScene } from './scenes/delete-account.scene';
+
 const config = Configuration();
 
 const bot = new Telegraf<IContext>(config.bot_token);
@@ -88,7 +92,10 @@ const init = async () => {
             TestScene,
             HomeScene,
             AccountsScene,
-            ManageAccountScene
+            ManageAccountScene,
+            CreateAccountScene,
+            EditAccountScene,
+            DeleteAccountScene,
         ]);
         bot.use(scene.init());
         sceneLogger.info(`Successfully inited.`);

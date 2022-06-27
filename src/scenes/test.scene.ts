@@ -18,7 +18,7 @@ export const TestScene = new Scene(
         for (let i = 0; i < 100; i++) {
             accounts.push(`Item ${i + 1}`);
         }
-        await ctx.replyWithMarkdownV2('Test [yandex](https://yandex.ru/)');
+        await ctx.replyWithMarkdown('Test [yandex](https://yandex.ru/)');
         ctx.session.scene.updated = 1;
         await ctx.scene!.next();
     }),

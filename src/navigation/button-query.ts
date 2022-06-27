@@ -1,0 +1,16 @@
+export const BUTTON_QUERY = {
+    'pagination_next': 'pagination_next',
+    'pagination_back': 'pagination_back',
+    'create_new': 'create_new',
+    'pagination_close': 'pagination_close',
+    'account_accumulative_type': 'account_accumulative_type',
+    'account_purpose_type': 'account_purpose_type',
+    'account_usd_currency': 'account_usd_currency',
+    'account_rub_currency': 'account_rub_currency',
+    'save': 'save',
+    'edit': 'edit',
+    'delete': 'delete',
+    'skip': 'skip',
+    'show_transaction': 'show_transaction',
+    'confirm': 'confirm',
+};

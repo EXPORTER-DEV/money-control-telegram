@@ -26,7 +26,7 @@ export const AccountType = {
 
 export interface IAccountSchema {
     _id: Types.ObjectId,
-    user: PopulatedDoc<Document<Types.ObjectId> & IUserSchema>;
+    user: PopulatedDoc<Document<Types.ObjectId> & IUserSchema> | Types.ObjectId;
     type: AccountTypeEnum;
     name: string;
     transactions: Types.ObjectId[] | ITransactionSchema[];
@@ -46,9 +46,14 @@ export class AccountDto implements IAccountSchema {
     purpose: number;
     constructor(data: IAccountSchema) {
         Object.assign(this, {
-            ...data,
+            _id: data._id,
+            user: data.user,
+            type: data.type,
+            name: data.name,
+            transactions: data.transactions || [],
             transactionsTotal: data.transactionsTotal || 0,
             currency: data.currency || AccountCurrencyEnum.RUB,
+            purpose: data.purpose || undefined,
         });
     }
 }
