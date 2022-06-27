@@ -41,11 +41,11 @@ export interface IConfig {
 export class Config implements IConfig {
     connection: IConfigConnection;
     key: string = 'session';
-    constructor(data: Partial<IConfig>){
-        if(data.connection){
+    constructor(data: Partial<IConfig>) {
+        if (data.connection) {
             this.connection = plainToInstance(ConfigConnection, data.connection);
             const errors = validateSync(this.connection);
-            if(errors.length > 0){
+            if (errors.length > 0) {
                 throw new Error(`Failed validate Session config.connection: ${errors.map((item) => (`${item.property} -> ${JSON.stringify(item.constraints)}`)).join("\n")}`);
             }
         }

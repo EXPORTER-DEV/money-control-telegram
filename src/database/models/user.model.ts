@@ -6,7 +6,7 @@ import { ILogger } from "../../lib/logger/logger";
 export class UserModel extends BaseModel {
     model: Model<IUserSchema>;
     logger: ILogger;
-    constructor(model: Model<IUserSchema>, logger: ILogger){
+    constructor(model: Model<IUserSchema>, logger: ILogger) {
         super(model, logger);
     }
     async findAll(): Promise<IUserSchema[]> {
@@ -14,7 +14,7 @@ export class UserModel extends BaseModel {
     }
     async findById(id: number): Promise<IUserSchema | undefined> {
         const find = await this.model.findOne({id}).populate('accounts').exec();
-        if(find !== null){
+        if (find !== null) {
             return find;
         }
         return undefined;

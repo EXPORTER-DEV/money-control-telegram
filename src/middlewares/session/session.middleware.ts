@@ -6,7 +6,7 @@ export class SessionMiddleware {
     connection: Redis;
     key: string;
     logger: ILogger;
-    constructor(data: IConfig, logger: ILogger){
+    constructor(data: IConfig, logger: ILogger) {
         this.logger = logger.child({module: 'SessionMiddleware'});
         this.logger.info('Constructing');
         const config = new Config(data);
@@ -18,10 +18,10 @@ export class SessionMiddleware {
             port: config.connection.port,
             db: config.connection.database,
             retryStrategy(times) {
-                if(times > config.connection.maxRetries!){
+                if (times > config.connection.maxRetries!) {
                     const delay = config.connection.reconnectDelay!;
                     return delay;
-                }else{
+                } else {
                     return null;
                 }
             },
@@ -44,10 +44,10 @@ export class SessionMiddleware {
         let result = null;
         try {
             result = await this.connection.get(key);
-        }catch(e: any){
+        } catch (e: any) {
             this.logger.warn({error: e.stack, key}, `Failed read session for userId: ${userId}`);
         }
-        if(result !== null){
+        if (result !== null) {
             try {
                 return JSON.parse(result) as ISessionContext;
             } catch (e: any) {
@@ -60,21 +60,21 @@ export class SessionMiddleware {
         const key = this.generateKey(userId);
         try {
             const res = await this.connection.set(key, JSON.stringify(value));
-            if(res !== 'OK'){
+            if (res !== 'OK') {
                 throw new Error(`Result: ${res}`);
             }
         } catch (e: any) {
             this.logger.warn({error: e.stack!, key}, `Failed set session for userId: ${userId}`);
         }
     }
-    init(){
+    init() {
         return async (ctx: ISessionContext, next: () => void) => {
-            if(ctx.from){
+            if (ctx.from) {
                 const session = await this.get(ctx.from.id);
                 ctx.session = session;
                 await next();
                 await this.set(ctx.from.id, ctx.session);
-            }else{
+            } else {
                 await next();
             }
         };

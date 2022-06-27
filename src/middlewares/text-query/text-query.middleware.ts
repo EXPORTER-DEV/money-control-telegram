@@ -9,12 +9,12 @@ import { ITextQueryContext } from "./text-query.interface";
  * @returns 
  */
 export const TextQueryMiddleware = async (ctx: ITextQueryContext, next: () => void) => {
-    if(ctx.from){
-        if(ctx.callbackQuery){
+    if (ctx.from) {
+        if (ctx.callbackQuery) {
             ctx.textQuery = ctx.callbackQuery.data;
         }
-        if(ctx.message === undefined || !('text' in ctx.message)) return next();
-        if(ctx.message && TEXT_QUERY[ctx.message.text] !== undefined){
+        if (ctx.message === undefined || !('text' in ctx.message)) return next();
+        if (ctx.message && TEXT_QUERY[ctx.message.text] !== undefined) {
             ctx.textQuery = TEXT_QUERY[ctx.message.text];
         }
     }

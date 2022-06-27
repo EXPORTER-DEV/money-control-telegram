@@ -46,7 +46,7 @@ const init = async () => {
         }, logger);
         bot.use(session.init());
         sessionLogger.info(`Successfully inited`);
-    } catch(e: any) {
+    } catch (e: any) {
         sessionLogger.error(`Failed initing: ${e.stack!}`);
     }
 
@@ -58,7 +58,7 @@ const init = async () => {
         mongoLogger.info(`Starting connecting with: ${url}`);
         connection = await mongoose.connect(url);
         mongoLogger.info(`Successfully connected.`);
-    } catch(e: any) {
+    } catch (e: any) {
         mongoLogger.error(`Failed connecting: ${e.stack!}`);
     }
 
@@ -71,7 +71,7 @@ const init = async () => {
         database = new DatabaseMiddleware(models);
         bot.use(database.init());
         databaseLogger.info(`Successfully inited database models`);
-    } catch(e: any) {
+    } catch (e: any) {
         databaseLogger.error(`Failed initing: ${e.stack!}`);
     }
     
@@ -92,7 +92,7 @@ const init = async () => {
         ]);
         bot.use(scene.init());
         sceneLogger.info(`Successfully inited.`);
-    } catch(e: any) {
+    } catch (e: any) {
         sceneLogger.error(`Failed initing: ${e.stack!}`);
     }
     //

@@ -13,7 +13,7 @@ export class AccountModel extends BaseModel {
     model: Model<IAccountSchema>;
     logger: ILogger;
     userModel: Model<IUserSchema>;
-    constructor(model: Model<IAccountSchema>, userModel: Model<IUserSchema>, logger: ILogger){
+    constructor(model: Model<IAccountSchema>, userModel: Model<IUserSchema>, logger: ILogger) {
         super(model, logger);
         this.userModel = userModel;
     }
@@ -34,7 +34,7 @@ export class AccountModel extends BaseModel {
                 transactionsTotal: {$sum: "$transactions.amount"},
             });
         const countQuery = this.model.find(query).count(query);
-        if(skip !== undefined && limit !== undefined){
+        if (skip !== undefined && limit !== undefined) {
             findQuery.skip(skip).limit(limit);
         }
         const items = await findQuery.exec()
@@ -47,7 +47,7 @@ export class AccountModel extends BaseModel {
     }
     async create(userId: Types.ObjectId, type: AccountTypeEnum, name: string): Promise<Document<unknown, any, IAccountSchema>> {
         const user = await this.userModel.findOne({_id: userId}).exec();
-        if(user !== null){
+        if (user !== null) {
             const account = new this.model();
             account.user = userId;
             account.type = type;
@@ -67,7 +67,7 @@ export class AccountModel extends BaseModel {
     }
     async delete(id: Types.ObjectId): Promise<boolean> {
         const account = await this.model.findOne({_id: id}).exec();
-        if(account !== null){
+        if (account !== null) {
             try {
                 await this.userModel.updateOne({_id: account.user}, {$pull: {accounts: account._id}}).orFail().exec();
                 await account.delete();

@@ -15,7 +15,7 @@ export const TestScene = new Scene(
     }),
     Scene.default(async (ctx) => {
         const accounts = [];
-        for(let i = 0; i < 100; i++){
+        for (let i = 0; i < 100; i++) {
             accounts.push(`Item ${i + 1}`);
         }
         await ctx.replyWithMarkdownV2('Test [yandex](https://yandex.ru/)');
@@ -23,7 +23,7 @@ export const TestScene = new Scene(
         await ctx.scene!.next();
     }),
     Scene.default(async (ctx) => {
-        if(ctx.textQuery){
+        if (ctx.textQuery) {
             console.log(1);
             try {
                 ctx.session.scene.updated += 1;
@@ -31,7 +31,7 @@ export const TestScene = new Scene(
                 await ctx.editMessageText(`Counter: ${ctx.session.scene.updated}`, Markup.inlineKeyboard([
                     Markup.button.callback('Next', 'next'),
                 ]));
-            }catch(e){
+            } catch (e) {
                 console.log(e);
                 ctx.reply('123');
             }

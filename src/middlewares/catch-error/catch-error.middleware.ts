@@ -7,10 +7,10 @@ import { ILogger } from "../../lib/logger/logger";
  */
 export class CatchErrorMiddleware {
     readonly logger: ILogger;
-    constructor(logger: ILogger){
+    constructor(logger: ILogger) {
         this.logger = logger.child({module: 'CatchErrorMiddleware'});
     }
-    init(){
+    init() {
         return async (ctx: Context, next: () => void) => {
             try {
                 await next();

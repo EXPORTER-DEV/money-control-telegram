@@ -20,6 +20,8 @@ module.exports = {
 		"semi": ["error", "always"],
 		"@typescript-eslint/no-inferrable-types": 0,
 		"@typescript-eslint/no-non-null-assertion": 0,
+		"keyword-spacing": ["warn", {"before": true, "after": true}],
+		"space-before-blocks": "warn"
 	},
 	"ignorePatterns": [".eslintrc.js"],
 }

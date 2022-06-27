@@ -44,7 +44,7 @@ export class AccountDto implements IAccountSchema {
     transactionsTotal: number;
     currency: AccountCurrencyEnum;
     purpose: number;
-    constructor(data: IAccountSchema){
+    constructor(data: IAccountSchema) {
         Object.assign(this, {
             ...data,
             transactionsTotal: data.transactionsTotal || 0,
