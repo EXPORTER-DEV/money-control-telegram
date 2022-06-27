@@ -1,11 +1,12 @@
 import { Markup } from "telegraf";
 import { InlineKeyboardButton, InlineKeyboardMarkup } from "telegraf/typings/core/types/typegram";
 import { AccountModel } from "../database/models/account.model";
+import { AccountCurrency, AccountType } from "../database/schemas/account.schema";
 import { Scene } from "../middlewares/scene/scene";
 import { BUTTON } from "../navigation/button";
 import { SCENE_QUERY } from "../navigation/scene-query";
 
-const pageLimit = 10;
+const pageLimit = 6;
 
 export const AccountsScene = new Scene(
     {
@@ -26,13 +27,15 @@ export const AccountsScene = new Scene(
     }),
     Scene.default(async (ctx) => {
         const accountModel = ctx.database.inject<AccountModel>(AccountModel);
+        ctx.session.scene.options = ctx.session.scene.options || {};
+        const sceneOptions = ctx.session.scene.options;
         if(ctx.textQuery !== undefined){
             //
-            const offset = ctx.session.scene.offset;
-            const count = ctx.session.scene.count;
+            const offset = sceneOptions.offset;
+            const count = sceneOptions.count;
             if(ctx.textQuery === SCENE_QUERY.pagination_back && offset !== undefined && count !== undefined){
                 if(offset - pageLimit >= 0){
-                    ctx.session.scene.offset -= pageLimit;
+                    sceneOptions.offset -= pageLimit;
                 }else{
                     await ctx.answerCbQuery('No previous pages.').catch();
                     return;
@@ -40,29 +43,35 @@ export const AccountsScene = new Scene(
             }
             if(ctx.textQuery === SCENE_QUERY.pagination_next && offset !== undefined && count !== undefined){
                 if(offset + pageLimit <= count){
-                    ctx.session.scene.offset += pageLimit;
+                    sceneOptions.offset += pageLimit;
                 }else{
                     await ctx.answerCbQuery('No next pages.').catch();
                     return;
                 }
             }
-            const currentPage = Math.ceil((ctx.session.scene.offset + pageLimit) / pageLimit);
+            const currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
             const maxPage = Math.ceil(count / pageLimit);
             if(count !== undefined && offset !== undefined && currentPage > maxPage){
-                ctx.session.scene.offset = Math.floor((count - pageLimit) / pageLimit);
+                sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit);
             }
             if(ctx.textQuery.indexOf('/account') === 0){
                 //
                 return;
             }
         }
-        if(ctx.session.scene.offset === undefined){
-            ctx.session.scene.offset = 0;
+        if(sceneOptions.offset === undefined){
+            sceneOptions.offset = 0;
         }
-        const accounts = await accountModel.findAllByUserId(ctx.user._id, ctx.session.scene.offset, pageLimit);
+        const accounts = await accountModel.findAllByUserId(ctx.user._id, sceneOptions.offset, pageLimit);
 
         const buttons: InlineKeyboardButton[][] = [];
-        const pageAccountButtons = accounts.items.map(account => Markup.button.callback(`${account.name} **[${account.type}]**`, `/account ${account._id}`));
+        const pageAccountButtons = accounts.items
+            .map(account => 
+                Markup.button.callback(
+                    `${AccountType[account.type]} - ${account.name} - ${account.transactionsTotal} ${AccountCurrency[account.currency]}`, 
+                    `/account ${account._id}`
+                )
+            );
         if(accounts.count === 0){
             buttons.push(
                 [BUTTON.CREATE_NEW],
@@ -74,21 +83,22 @@ export const AccountsScene = new Scene(
             const paginationControl: InlineKeyboardButton[] = [];
             paginationControl.push(BUTTON.PAGINATION_BACK);
             paginationControl.push(BUTTON.PAGINATION_CLOSE);
+            paginationControl.push(BUTTON.PAGINATION_NEXT);
             buttons.push(paginationControl);
         }
-        const currentPage = Math.ceil((ctx.session.scene.offset + pageLimit) / pageLimit);
+        const currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
         const maxPage = Math.ceil(accounts.count / pageLimit);
         const messageContent: [string, Markup.Markup<InlineKeyboardMarkup>] = [
             `Page ${currentPage}/${maxPage}`, 
             Markup.inlineKeyboard(buttons),
         ];
-        if(ctx.textQuery !== undefined && ctx.session.scene.count !== undefined){
+        if(ctx.textQuery !== undefined && sceneOptions.count !== undefined){
             await ctx.editMessageText(...messageContent).catch();
         }else{
             await ctx.reply(...messageContent).catch();
         }
         if(accounts.count > 0){
-            ctx.session.scene.count = accounts.count;
+            sceneOptions.count = accounts.count;
         }
     }),
 );

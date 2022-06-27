@@ -1,11 +1,11 @@
 import { Document, Model, Types } from "mongoose";
 import { BaseModel } from "./base.model";
-import { AccountTypeEnum, IAccountSchema } from "../schemas/account.schema";
+import { AccountDto, AccountTypeEnum, IAccountSchema } from "../schemas/account.schema";
 import { IUserSchema } from "../schemas/user.schema";
 import { ILogger } from "../../lib/logger/logger";
 
 export interface IFindAllPaginationResult {
-    items: IAccountSchema[];
+    items: AccountDto[];
     count: number;
 }
 
@@ -22,7 +22,7 @@ export class AccountModel extends BaseModel {
     }
     async findAllByUserId(userId: Types.ObjectId, skip?: number, limit?: number): Promise<IFindAllPaginationResult> {
         const query = {user: userId};
-        const findQuery = this.model.aggregate()
+        const findQuery = this.model.aggregate<IAccountSchema>()
             .match(query)
             .lookup({
                 from: 'transactions',
@@ -37,7 +37,8 @@ export class AccountModel extends BaseModel {
         if(skip !== undefined && limit !== undefined){
             findQuery.skip(skip).limit(limit);
         }
-        const items = await findQuery.exec();
+        const items = await findQuery.exec()
+            .then(items => items.map(item => new AccountDto(item)));
         const count = await countQuery.exec();
         return {
             count,
@@ -64,7 +65,7 @@ export class AccountModel extends BaseModel {
             throw new Error('UNKNOWN_USER');
         }
     }
-    async delete(id: Types.ObjectId): Promise<true | false> {
+    async delete(id: Types.ObjectId): Promise<boolean> {
         const account = await this.model.findOne({_id: id}).exec();
         if(account !== null){
             try {
@@ -79,5 +80,11 @@ export class AccountModel extends BaseModel {
             this.logger.error(`Unknown account with _id ${id}`);
             return false;
         }
+    }
+    async save(account: IAccountSchema): Promise<boolean> {
+        return this.model.findOneAndUpdate({_id: account._id}, account)
+            .exec()
+            .then(() => true)
+            .catch(() => false);
     }
 }
