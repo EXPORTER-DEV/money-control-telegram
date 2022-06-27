@@ -75,6 +75,8 @@ export class Session {
                 ctx.session = session;
                 await next();
                 await this.set(ctx.from.id, ctx.session);
+            }else{
+                await next();
             }
         }
     }
