@@ -9,13 +9,14 @@ export class SceneController {
         private ctx: IContext, 
         private middleware: SceneMiddleware
     ){}
-    async join(name: string, forceInit?: boolean): Promise<boolean> {
+    async join(name: string, options?: Record<string, any>, forceInit?: boolean): Promise<boolean> {
         await this.exit();
         const find = this.middleware.findScene(name);
         if(find !== undefined){
             const sceneInfo: ISceneInfo = {
                 name,
                 current: 0,
+                ...options,
             };
             const joined = this.middleware.findScenePosition(find, SceneItemEnum.JOINED);
             this.ctx.session!.scene = sceneInfo;
