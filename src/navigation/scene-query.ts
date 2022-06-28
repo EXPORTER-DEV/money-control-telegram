@@ -7,4 +7,5 @@ export const SCENE_QUERY = {
     'create_account': 'create_account_scene',
     'edit_account': 'edit_account_scene',
     'delete_account': 'delete_account_scene',
+    'create_transaction': 'create_transaction',
 };
