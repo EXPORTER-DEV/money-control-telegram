@@ -30,8 +30,13 @@ export const EditAccountScene = new Scene(
         startQuery: [SCENE_QUERY.edit_account, '/edit-account'],
     },
     Scene.joined(async (ctx) => {
-        ctx.session.scene.originalAccount = Object.assign({}, ctx.session.scene.account);
-        await ctx.scene.jump(0, true);
+        if (ctx.session.scene.account !== undefined) {
+            ctx.session.scene.originalAccount = Object.assign({}, ctx.session.scene.account);
+            await ctx.scene.jump(0, true);
+        } else {
+            await ctx.reply(`❗️ Can't find account.`);
+            return exit(ctx);
+        }
     }),
     Scene.callback(async (ctx) => {
         if (ctx.textQuery === BUTTON_QUERY.pagination_close) {

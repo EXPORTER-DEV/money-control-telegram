@@ -56,12 +56,15 @@ export const ManageAccountScene = new Scene(
         await ctx.scene.next(1);
     }),
     Scene.default(async (ctx) => {
-        if (ctx.textQuery && [BUTTON_QUERY.edit, BUTTON_QUERY.delete, BUTTON.SHOW_TRANSACTION].includes(ctx.textQuery)) {
+        if (ctx.textQuery && [BUTTON_QUERY.edit, BUTTON_QUERY.delete, BUTTON_QUERY.add_transaction].includes(ctx.textQuery)) {
             if (ctx.textQuery === BUTTON_QUERY.edit) {
                 await ctx.scene.join(SCENE_QUERY.edit_account, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
             }
             if (ctx.textQuery === BUTTON_QUERY.delete) {
                 await ctx.scene.join(SCENE_QUERY.delete_account, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
+            }
+            if (ctx.textQuery === BUTTON_QUERY.add_transaction) {
+                await ctx.scene.join(SCENE_QUERY.create_transaction, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
             }
         } else {
             await ctx.scene.next(-1, true);

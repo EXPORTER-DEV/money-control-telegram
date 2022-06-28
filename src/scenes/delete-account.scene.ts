@@ -35,7 +35,12 @@ export const DeleteAccountScene = new Scene(
         startQuery: [SCENE_QUERY.delete_account, '/delete-account'],
     },
     Scene.joined(async (ctx) => {
-        await ctx.scene.jump(0, true);
+        if (ctx.session.scene.account !== undefined) {
+            await ctx.scene.jump(0, true);
+        } else {
+            await ctx.reply(`❗️ Can't find account.`);
+            return exit(ctx);
+        }
     }),
     Scene.callback(async (ctx) => {
         if (ctx.textQuery === BUTTON_QUERY.pagination_close) {
