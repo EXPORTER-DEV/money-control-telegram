@@ -23,11 +23,26 @@ export class AccountModel extends BaseModel {
         const query = {user: new Types.ObjectId(userId)};
         const findQuery = this.model.aggregate<IAccountSchema>()
             .match(query)
+            .addFields({
+                transactions: {
+                    $ifNull: ["$transactions", []]
+                }
+            })
             .lookup({
-                from: 'transactions',
-                localField: 'transactions',
-                foreignField: 'account',
-                as: 'transactions',
+                from: 'transactions', 
+                let: {
+                    account_transactions: "$transactions",
+                }, 
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $in: ["$_id", '$$account_transactions']
+                            }
+                        }
+                    }
+                ], 
+                as: 'transactions'
             })
             .addFields({
                 transactionsTotal: {$sum: "$transactions.amount"},
@@ -52,11 +67,26 @@ export class AccountModel extends BaseModel {
     async findOne(id: Types.ObjectId, userId: Types.ObjectId): Promise<AccountDto | undefined> {
         const find = await this.model.aggregate<IAccountSchema>()
             .match({_id: new Types.ObjectId(id), user: new Types.ObjectId(userId)})
+            .addFields({
+                transactions: {
+                    $ifNull: ["$transactions", []]
+                }
+            })
             .lookup({
-                from: 'transactions',
-                localField: 'transactions',
-                foreignField: 'account',
-                as: 'transactions',
+                from: 'transactions', 
+                let: {
+                    account_transactions: "$transactions",
+                }, 
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $in: ["$_id", '$$account_transactions']
+                            }
+                        }
+                    }
+                ], 
+                as: 'transactions'
             })
             .addFields({
                 transactionsTotal: {$sum: "$transactions.amount"},
