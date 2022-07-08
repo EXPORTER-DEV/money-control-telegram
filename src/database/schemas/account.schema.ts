@@ -50,7 +50,6 @@ export class AccountDto implements IAccountSchema {
             user: data.user,
             type: data.type,
             name: data.name,
-            transactions: data.transactions || [],
             transactionsTotal: data.transactionsTotal || 0,
             currency: data.currency || AccountCurrencyEnum.RUB,
             purpose: data.purpose || undefined,

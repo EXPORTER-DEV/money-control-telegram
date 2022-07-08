@@ -56,11 +56,13 @@ export const AccountsScene = new Scene(
             if (ctx.textQuery.indexOf('/account') === 0) {
                 const id = ctx.textQuery.split(/\s/)[1];
                 if (id !== undefined) {
+                    ctx.textQuery = undefined;
                     await ctx.scene.join(SCENE_QUERY.manage_account, {param: {id}, referer: SCENE_QUERY.manage_account, options: ctx.session.scene});
                 }
                 return;
             }
             if (ctx.textQuery === BUTTON_QUERY.create_new) {
+                ctx.textQuery = undefined;
                 await ctx.scene.join(SCENE_QUERY.create_account, {referer: SCENE_QUERY.accounts, options: ctx.session.scene});
                 return;
             }
@@ -82,6 +84,9 @@ export const AccountsScene = new Scene(
                 )
             );
         if (accounts.count === 0) {
+            buttons.push([
+                Markup.button.callback('No account found', 'empty')
+            ]);
             buttons.push(
                 [BUTTON.CREATE_NEW],
                 [BUTTON.PAGINATION_CLOSE]

@@ -9,6 +9,7 @@ import loggerLib from '../lib/logger/logger';
 import { IContext } from "../lib/bot.interface";
 import { InlineKeyboardButton } from "telegraf/typings/core/types/typegram";
 import { Types } from "mongoose";
+import { formatAmount } from "../utils/formatAmount";
 
 const logger = loggerLib.child({
     module: SCENE_QUERY.edit_account,
@@ -160,7 +161,11 @@ export const EditAccountScene = new Scene(
                 `\\- Name: ${originalAccountOptions.name !== accountOptions.name ? `«~${originalAccountOptions.name}~» ➞` : ``}«*${accountOptions.name}*»`,
                 `\\- Account type: ${originalAccountOptions.type !== accountOptions.type ? `«~${AccountType[originalAccountOptions.type]} ${originalAccountOptions.type}~» ➞` : ``} *${AccountType[accountOptions.type]} ${accountOptions.type}*`,
                 `\\- Currency: *${AccountCurrency[accountOptions.currency]}*`,
-                `${accountOptions.type === AccountTypeEnum.PURPOSE ? `\\- Target amount: ${originalAccountOptions.type === accountOptions.type && originalAccountOptions.purpose !== accountOptions.purpose ? `«~${originalAccountOptions.purpose} ${AccountCurrency[originalAccountOptions.currency]}~» ➞` : ``}*${accountOptions.purpose} ${AccountCurrency[accountOptions.currency]}*`: ``}`
+                `${accountOptions.type === AccountTypeEnum.PURPOSE
+                    ? `\\- Target amount: ${originalAccountOptions.type === accountOptions.type && originalAccountOptions.purpose !== accountOptions.purpose
+                        ? `«~${formatAmount(originalAccountOptions.purpose!)} ${AccountCurrency[originalAccountOptions.currency]}~» ➞`
+                        : ``
+                    }*${formatAmount(accountOptions.purpose!)} ${AccountCurrency[accountOptions.currency]}*`: ``}`
             ].filter(text => text.length > 0).join("\n"), Markup.inlineKeyboard([
                 [
                     BUTTON.SAVE

@@ -8,6 +8,7 @@ import { SCENE_QUERY } from "../navigation/scene-query";
 import loggerLib from '../lib/logger/logger';
 import { IContext } from "../lib/bot.interface";
 import { CONSTANTS } from "./constants";
+import { formatAmount } from "../utils/formatAmount";
 
 const logger = loggerLib.child({
     module: SCENE_QUERY.create_account,
@@ -157,7 +158,9 @@ export const CreateAccountScene = new Scene(
                 `\\- Name: «*${accountOptions.name}*»`,
                 `\\- Account type: *${AccountType[accountOptions.type]} ${accountOptions.type}*`,
                 `\\- Currency: *${AccountCurrency[accountOptions.currency]}*`,
-                `${accountOptions.type === AccountTypeEnum.PURPOSE ? `\\- Target amount: *${accountOptions.purpose} ${AccountCurrency[accountOptions.currency]}*`: ``}`
+                `${accountOptions.type === AccountTypeEnum.PURPOSE 
+                    ? `\\- Target amount: *${formatAmount(accountOptions.purpose!)} ${AccountCurrency[accountOptions.currency]}*`
+                    : ``}`
             ].filter(text => text.length > 0).join("\n"), Markup.inlineKeyboard([
                 [
                     BUTTON.SAVE

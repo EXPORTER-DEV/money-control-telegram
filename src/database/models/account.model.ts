@@ -47,14 +47,14 @@ export class AccountModel extends BaseModel {
             .addFields({
                 transactionsTotal: {$sum: "$transactions.amount"},
             });
-        const countQuery = this.model.find(query).count(query);
-        if (paginationOptions.offset !== undefined && paginationOptions.limit !== undefined) {
-            findQuery.skip(paginationOptions.offset).limit(paginationOptions.limit);
-        }
         if (paginationOptions.sort) {
             paginationOptions.sort.forEach(sort => 
                 findQuery.sort(sort)
             );
+        }
+        const countQuery = this.model.find(query).count(query);
+        if (paginationOptions.offset !== undefined && paginationOptions.limit !== undefined) {
+            findQuery.skip(paginationOptions.offset).limit(paginationOptions.limit);
         }
         const items = await findQuery.exec()
             .then(items => items.map(item => new AccountDto(item)));
