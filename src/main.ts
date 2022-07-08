@@ -25,6 +25,8 @@ import { CreateAccountScene } from './scenes/create-account.scene';
 import { EditAccountScene } from './scenes/edit-account.scene';
 import { DeleteAccountScene } from './scenes/delete-account.scene';
 import { CreateTransactionScene } from './scenes/create-transaction.scene';
+import { TransactionsScene } from './scenes/transactions.scene';
+import { ManageTransactionScene } from './scenes/manage-transaction.scene';
 
 const config = Configuration();
 
@@ -98,6 +100,8 @@ const init = async () => {
             EditAccountScene,
             DeleteAccountScene,
             CreateTransactionScene,
+            TransactionsScene,
+            ManageTransactionScene,
         ]);
         bot.use(scene.init());
         sceneLogger.info(`Successfully inited.`);

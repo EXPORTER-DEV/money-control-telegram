@@ -9,22 +9,20 @@ import loggerLib from '../lib/logger/logger';
 import { IContext } from "../lib/bot.interface";
 import { CONSTANTS } from "./constants";
 import { TransactionModel } from "../database/models/transaction.model";
+import { formatAmount } from "../utils/formatAmount";
 
 const logger = loggerLib.child({
     module: SCENE_QUERY.create_transaction,
     isScene: true
 });
 
-const exit = async (ctx: IContext, created: boolean = false) => {
+const exit = async (ctx: IContext) => {
     if (ctx.session.scene?.referer === undefined) {
         await ctx.scene.join(SCENE_QUERY.home);
     } else {
         const options = ctx.session.scene.options;
-        if (created && options) {
-            options.options.offset = Math.floor((options.options.count + 1) / CONSTANTS.PAGE_ACCOUNTS_LIMIT) * CONSTANTS.PAGE_ACCOUNTS_LIMIT;
-            ctx.textQuery = undefined;
-        }
-        await ctx.scene.join(ctx.session.scene.referer, options ?? {});
+        ctx.textQuery = undefined;
+        await ctx.scene.join(ctx.session.scene.referer, options || {});
     }
 };
 
@@ -94,12 +92,12 @@ export const CreateTransactionScene = new Scene(
             } else {
                 await ctx.reply(`❌ Failed create new transaction`);
             }
-            return exit(ctx, true);
+            return exit(ctx);
         }
         await ctx.replyWithMarkdown(
             [
                 `Please confirm your transaction:`,
-                `${transactionOptions.amount} *${AccountCurrency[account.currency]}* for account «*${account.name}*»`,
+                `${formatAmount(transactionOptions.amount)} *${AccountCurrency[account.currency]}* for account «*${account.name}*»`,
             ].filter(text => text.length > 0).join("\n"), Markup.inlineKeyboard([
                 [
                     BUTTON.SAVE

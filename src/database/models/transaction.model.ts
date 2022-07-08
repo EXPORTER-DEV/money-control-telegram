@@ -20,14 +20,14 @@ export class TransactionModel extends BaseModel {
         const query = {account: new Types.ObjectId(accountId), user: new Types.ObjectId(userId)};
         const findQuery = this.model.aggregate<ITransactionSchema>()
             .match(query);
-        const countQuery = this.model.find(query).count(query);
-        if (paginationOptions.offset !== undefined && paginationOptions.limit !== undefined) {
-            findQuery.skip(paginationOptions.offset).limit(paginationOptions.limit);
-        }
         if (paginationOptions.sort) {
             paginationOptions.sort.forEach(sort => 
                 findQuery.sort(sort)
             );
+        }
+        const countQuery = this.model.find(query).count(query);
+        if (paginationOptions.offset !== undefined && paginationOptions.limit !== undefined) {
+            findQuery.skip(paginationOptions.offset).limit(paginationOptions.limit);
         }
         const items = await findQuery.exec()
             .then(items => items.map(item => new TransactionDto(item)));
