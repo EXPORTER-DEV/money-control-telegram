@@ -7,9 +7,19 @@ import { ISceneInfo, IScenePositionResult, ISceneSessionContext, SceneItemEnum }
 export class SceneController {
     constructor(
         private ctx: IContext, 
-        private middleware: SceneMiddleware
+        private middleware: SceneMiddleware,
+        private historyMiddleware: SceneHistoryMiddleware,
     ) {}
+    get history() {
+        return {
+            back: (count?: number, additionalOptions?: Record<string, any>, forceInit?: boolean) => this.historyMiddleware.back.call(this.historyMiddleware, count, additionalOptions, forceInit),
+            current: this.ctx.session.scene.name,
+            list: this.historyMiddleware.history,
+            clear: () => this.historyMiddleware.clear.call(this.historyMiddleware),
+        };
+    }
     async join(name: string, options?: Record<string, any>, forceInit?: boolean): Promise<boolean> {
+        this.historyMiddleware.push(this.ctx.session.scene, {name, ...options} as ISceneInfo);
         await this.exit();
         const find = this.middleware.findScene(name);
         if (find !== undefined) {
@@ -92,6 +102,58 @@ export class SceneController {
     }
 }
 
+export class SceneHistoryMiddleware {
+    constructor(
+        private ctx: IContext,
+        private logger: ILogger,
+    ) {
+        this.logger = logger.child({module: 'SceneHistoryMiddleware'});
+    }
+    async back(count: number = 1, additionalOptions: Record<string, any> = {}, forceInit: boolean = false): Promise<boolean> {
+        const sceneInfo = this.take(count);
+        if (sceneInfo) {
+            if (sceneInfo.name === this.ctx.session.scene.name) {
+                return this.back(count + 1, additionalOptions, forceInit);
+            }
+            const { name, ...options} = sceneInfo;
+            this.logger.debug({user: this.ctx.from!.id, sceneInfo, additionalOptions, referer: this.ctx.session.scene.name}, 'Removed item from history');
+            this.ctx.textQuery = undefined;
+            await this.ctx.scene.join(name, {...options, ...additionalOptions, referer: this.ctx.session.scene.name}, forceInit);
+            return true;
+        }
+        return false;
+    }
+    public push(sceneInfo: ISceneInfo, newSceneInfo: ISceneInfo): void {
+        if (!sceneInfo) return;
+        const isBackDirection = this.history.findIndex(historySceneInfo => historySceneInfo.name === newSceneInfo.name);
+        if (isBackDirection > -1) {
+            this.history.splice(isBackDirection);
+            return;
+        }
+        sceneInfo = {...sceneInfo};
+        this.history.push(sceneInfo);
+    }
+    private take(count: number): ISceneInfo | undefined {
+        if (this.history.length > 0) {
+            return this.history.slice(-count)[0];
+        }
+        return undefined;
+    }
+    public clear(): void {
+        this.logger.debug({user: this.ctx.from!.id}, 'Cleared history');
+        this.history = [];
+    }
+    set history(value: ISceneInfo[]) {
+        this.ctx.session.sceneHistory = value;
+    }
+    get history(): ISceneInfo[] {
+        if (!this.ctx.session.sceneHistory) {
+            this.ctx.session.sceneHistory = [];
+        }
+        return this.ctx.session.sceneHistory;
+    }
+}
+
 export class SceneMiddleware {
     private list: Scene[] = [];
     readonly logger: ILogger;
@@ -167,7 +229,8 @@ export class SceneMiddleware {
     init() {
         return async (ctx: IContext, next: () => void) => {
             if (ctx.from) {
-                const sceneController = new SceneController(ctx, this);
+                const historyMiddleware = new SceneHistoryMiddleware(ctx, this.logger);
+                const sceneController = new SceneController(ctx, this, historyMiddleware);
                 ctx.scene = sceneController;
                 // Callback query start
                 if (ctx.textQuery) {
