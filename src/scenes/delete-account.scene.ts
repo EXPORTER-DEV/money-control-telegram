@@ -15,17 +15,9 @@ const logger = loggerLib.child({
 });
 
 const exit = async (ctx: IContext, deleted: boolean = false) => {
-    if (ctx.session.scene?.referer === undefined) {
+    const back = await ctx.scene.history.back(deleted ? 2 : 1, {flags: {deleted: deleted ? true : undefined}});
+    if (!back) {
         await ctx.scene.join(SCENE_QUERY.home);
-    } else {
-        let referer = ctx.session.scene.referer;
-        let options = ctx.session.scene.options;
-        if (deleted && options.options) {
-            options = options.options;
-            referer = options.name;
-            ctx.textQuery = undefined;
-        }
-        await ctx.scene.join(referer, options ?? {});
     }
 };
 
@@ -79,11 +71,12 @@ export const DeleteAccountScene = new Scene(
             if (result) {
                 await ctx.reply(`✅ Successfully deleted account and its transactions: «${accountOptions.name}»`);
                 logger.info({userId: ctx.user.id, accountOptions}, `Deleted account and its transactions: ${accountOptions._id!}`);
+                return exit(ctx, true);
             } else {
                 await ctx.reply(`❌ Failed delete account: «${accountOptions.name}»`);
                 logger.warn({userId: ctx.user.id, accountOptions}, `Failed delete account: ${accountOptions._id!}`);
+                return exit(ctx);
             }
-            return exit(ctx, true);
         }
         
         return ctx.scene.next(-1, true);

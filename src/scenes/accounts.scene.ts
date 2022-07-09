@@ -6,6 +6,7 @@ import { Scene } from "../middlewares/scene/scene";
 import { BUTTON } from "../navigation/button";
 import { BUTTON_QUERY } from "../navigation/button-query";
 import { SCENE_QUERY } from "../navigation/scene-query";
+import { calculatePageIndex } from "../utils/calculatePageIndex";
 import { CONSTANTS } from "./constants";
 
 const pageLimit = CONSTANTS.PAGE_ACCOUNTS_LIMIT;
@@ -28,10 +29,28 @@ export const AccountsScene = new Scene(
         const accountModel = ctx.database.inject<AccountModel>(AccountModel);
         ctx.session.scene.options = ctx.session.scene.options || {};
         const sceneOptions: {offset: number, limit: number, count: number} = ctx.session.scene.options;
+
+        if (ctx.session.scene.flags?.created) {
+            ctx.session.scene.flags!.created = undefined;
+            sceneOptions.count += 1;
+            sceneOptions.offset = calculatePageIndex((sceneOptions.count || 0), pageLimit);
+        }
+
+        if (ctx.session.scene.flags?.deleted) {
+            ctx.session.scene.flags!.deleted = undefined;
+            sceneOptions.count -= 1;
+        }
+
+        const offset = sceneOptions.offset;
+        const count = sceneOptions.count;
+
+        let currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
+        let maxPage = Math.ceil(count / pageLimit);
+        if (count !== undefined && offset !== undefined && currentPage > maxPage) {
+            sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit) * pageLimit;
+        }
+
         if (ctx.textQuery !== undefined) {
-            //
-            const offset = sceneOptions.offset;
-            const count = sceneOptions.count;
             if (ctx.textQuery === BUTTON_QUERY.pagination_back && offset !== undefined && count !== undefined) {
                 if (offset - pageLimit >= 0) {
                     sceneOptions.offset -= pageLimit;
@@ -48,22 +67,17 @@ export const AccountsScene = new Scene(
                     return;
                 }
             }
-            const currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
-            const maxPage = Math.ceil(count / pageLimit);
-            if (count !== undefined && offset !== undefined && currentPage > maxPage) {
-                sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit) * pageLimit;
-            }
             if (ctx.textQuery.indexOf('/account') === 0) {
                 const id = ctx.textQuery.split(/\s/)[1];
                 if (id !== undefined) {
                     ctx.textQuery = undefined;
-                    await ctx.scene.join(SCENE_QUERY.manage_account, {param: {id}, referer: SCENE_QUERY.manage_account, options: ctx.session.scene});
+                    await ctx.scene.join(SCENE_QUERY.manage_account, {param: {id}});
                 }
                 return;
             }
             if (ctx.textQuery === BUTTON_QUERY.create_new) {
                 ctx.textQuery = undefined;
-                await ctx.scene.join(SCENE_QUERY.create_account, {referer: SCENE_QUERY.accounts, options: ctx.session.scene});
+                await ctx.scene.join(SCENE_QUERY.create_account);
                 return;
             }
         }
@@ -79,7 +93,7 @@ export const AccountsScene = new Scene(
         const pageAccountButtons = accounts.items
             .map(account => 
                 Markup.button.callback(
-                    `${AccountType[account.type]} - ${account.name} - ${account.transactionsTotal} ${account.type === AccountTypeEnum.PURPOSE && account.purpose ? `/ ${account.purpose} (${Math.round((account.transactionsTotal/account.purpose)*100)}%)` : ``} ${AccountCurrency[account.currency]}`, 
+                    `${AccountType[account.type]} ${account.name} | ${account.transactionsTotal} ${account.type === AccountTypeEnum.PURPOSE && account.purpose ? `/ ${account.purpose} (${Math.round((account.transactionsTotal/account.purpose)*100)}%)` : ``} ${AccountCurrency[account.currency]}`, 
                     `/account ${account._id}`
                 )
             );
@@ -100,8 +114,8 @@ export const AccountsScene = new Scene(
             paginationControl.push(BUTTON.PAGINATION_NEXT);
             buttons.push(paginationControl);
         }
-        const currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
-        const maxPage = Math.ceil(accounts.count / pageLimit);
+        currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
+        maxPage = Math.ceil(accounts.count / pageLimit);
         const messageContent: [string, Markup.Markup<InlineKeyboardMarkup>] = [
             `Page ${currentPage}/${maxPage}`, 
             Markup.inlineKeyboard(buttons),

@@ -12,6 +12,7 @@ export const HomeScene = new Scene(
     }),
     Scene.default(async (ctx) => {
         ctx.session!.counter = ctx.session.counter + 1 || 1;
+        ctx.scene.history.clear();
         await ctx.reply(`Hello! Counter is: ${ctx.session.counter}`, KEYBOARD.MAIN);
         await ctx.scene.exit();
     }),

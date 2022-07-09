@@ -7,10 +7,9 @@ import { IContext } from "../lib/bot.interface";
 import { TransactionModel } from "../database/models/transaction.model";
 
 const exit = async (ctx: IContext) => {
-    if (ctx.session.scene?.referer === undefined) {
+    const back = await ctx.scene.history.back();
+    if (!back) {
         await ctx.scene.join(SCENE_QUERY.home);
-    } else {
-        await ctx.scene.join(ctx.session.scene.referer, ctx.session.scene.options ?? {});
     }
 };
 
@@ -51,10 +50,10 @@ export const ManageTransactionScene = new Scene(
         await ctx.scene.next(1);
     }),
     Scene.default(async (ctx) => {
-        if (ctx.textQuery && [BUTTON_QUERY.edit].includes(ctx.textQuery)) {
+        if (ctx.textQuery && [BUTTON_QUERY.delete].includes(ctx.textQuery)) {
             if (ctx.textQuery === BUTTON_QUERY.delete) {
                 ctx.textQuery = undefined;
-                await ctx.scene.join(SCENE_QUERY.delete_transaction, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, transaction: ctx.session.scene.transaction});
+                await ctx.scene.join(SCENE_QUERY.delete_transaction, {account: ctx.session.scene.account, transaction: ctx.session.scene.transaction});
             }
         } else {
             await ctx.scene.next(-1, true);

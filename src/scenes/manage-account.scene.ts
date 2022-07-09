@@ -9,10 +9,9 @@ import { IContext } from "../lib/bot.interface";
 import { formatAmount } from "../utils/formatAmount";
 
 const exit = async (ctx: IContext) => {
-    if (ctx.session.scene?.referer === undefined) {
+    const back = await ctx.scene.history.back();
+    if (!back) {
         await ctx.scene.join(SCENE_QUERY.home);
-    } else {
-        await ctx.scene.join(ctx.session.scene.referer, ctx.session.scene.options ?? {});
     }
 };
 
@@ -59,19 +58,19 @@ export const ManageAccountScene = new Scene(
         if (ctx.textQuery && [BUTTON_QUERY.edit, BUTTON_QUERY.delete, BUTTON_QUERY.add_transaction, BUTTON_QUERY.show_transaction].includes(ctx.textQuery)) {
             if (ctx.textQuery === BUTTON_QUERY.edit) {
                 ctx.textQuery = undefined;
-                await ctx.scene.join(SCENE_QUERY.edit_account, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
+                await ctx.scene.join(SCENE_QUERY.edit_account, {account: ctx.session.scene.account});
             }
             if (ctx.textQuery === BUTTON_QUERY.delete) {
                 ctx.textQuery = undefined;
-                await ctx.scene.join(SCENE_QUERY.delete_account, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
+                await ctx.scene.join(SCENE_QUERY.delete_account, {account: ctx.session.scene.account});
             }
             if (ctx.textQuery === BUTTON_QUERY.add_transaction) {
                 ctx.textQuery = undefined;
-                await ctx.scene.join(SCENE_QUERY.create_transaction, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
+                await ctx.scene.join(SCENE_QUERY.create_transaction, {account: ctx.session.scene.account});
             }
             if (ctx.textQuery === BUTTON_QUERY.show_transaction) {
                 ctx.textQuery = undefined;
-                await ctx.scene.join(SCENE_QUERY.transactions, {referer: SCENE_QUERY.manage_account, options: ctx.session.scene, account: ctx.session.scene.account});
+                await ctx.scene.join(SCENE_QUERY.transactions, {account: ctx.session.scene.account});
             }
         } else {
             await ctx.scene.next(-1, true);

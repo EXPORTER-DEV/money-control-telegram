@@ -1,13 +1,11 @@
 import { Markup } from "telegraf";
-import { AccountModel } from "../database/models/account.model";
-import { AccountCurrency, AccountCurrencyEnum, AccountDto, AccountType, AccountTypeEnum } from "../database/schemas/account.schema";
+import { AccountCurrency, AccountDto } from "../database/schemas/account.schema";
 import { Scene } from "../middlewares/scene/scene";
 import { BUTTON } from "../navigation/button";
 import { BUTTON_QUERY } from "../navigation/button-query";
 import { SCENE_QUERY } from "../navigation/scene-query";
 import loggerLib from '../lib/logger/logger';
 import { IContext } from "../lib/bot.interface";
-import { CONSTANTS } from "./constants";
 import { TransactionModel } from "../database/models/transaction.model";
 import { formatAmount } from "../utils/formatAmount";
 
@@ -17,12 +15,9 @@ const logger = loggerLib.child({
 });
 
 const exit = async (ctx: IContext) => {
-    if (ctx.session.scene?.referer === undefined) {
+    const back = await ctx.scene.history.back();
+    if (!back) {
         await ctx.scene.join(SCENE_QUERY.home);
-    } else {
-        const options = ctx.session.scene.options;
-        ctx.textQuery = undefined;
-        await ctx.scene.join(ctx.session.scene.referer, options || {});
     }
 };
 

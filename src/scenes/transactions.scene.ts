@@ -14,10 +14,9 @@ import { CONSTANTS } from "./constants";
 const pageLimit = CONSTANTS.PAGE_ACCOUNTS_LIMIT;
 
 const exit = async (ctx: IContext) => {
-    if (ctx.session.scene?.referer === undefined) {
+    const back = await ctx.scene.history.back();
+    if (!back) {
         await ctx.scene.join(SCENE_QUERY.home);
-    } else {
-        await ctx.scene.join(ctx.session.scene.referer, ctx.session.scene.options ?? {});
     }
 };
 
@@ -45,10 +44,22 @@ export const TransactionsScene = new Scene(
         const transactionModel = ctx.database.inject<TransactionModel>(TransactionModel);
         ctx.session.scene.options = ctx.session.scene.options || {};
         const sceneOptions: {offset: number, limit: number, count: number} = ctx.session.scene.options;
+
+        if (ctx.session.scene.flags?.deleted) {
+            ctx.session.scene.flags!.deleted = undefined;
+            sceneOptions.count -= 1;
+        }
+
+        const offset = sceneOptions.offset;
+        const count = sceneOptions.count;
+
+        let currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
+        let maxPage = Math.ceil(count / pageLimit);
+        if (count !== undefined && offset !== undefined && currentPage > maxPage) {
+            sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit) * pageLimit;
+        }
         if (ctx.textQuery !== undefined) {
             //
-            const offset = sceneOptions.offset;
-            const count = sceneOptions.count;
             if (ctx.textQuery === BUTTON_QUERY.pagination_back && offset !== undefined && count !== undefined) {
                 if (offset - pageLimit >= 0) {
                     sceneOptions.offset -= pageLimit;
@@ -65,22 +76,17 @@ export const TransactionsScene = new Scene(
                     return;
                 }
             }
-            const currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
-            const maxPage = Math.ceil(count / pageLimit);
-            if (count !== undefined && offset !== undefined && currentPage > maxPage) {
-                sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit) * pageLimit;
-            }
             if (ctx.textQuery.indexOf('/transaction') === 0) {
                 const id = ctx.textQuery.split(/\s/)[1];
                 if (id !== undefined) {
                     ctx.textQuery = undefined;
-                    await ctx.scene.join(SCENE_QUERY.manage_transaction, {param: {id}, referer: SCENE_QUERY.manage_account, options: ctx.session.scene});
+                    await ctx.scene.join(SCENE_QUERY.manage_transaction, {param: {id}, account: ctx.session.scene.account});
                 }
                 return;
             }
             if (ctx.textQuery === BUTTON_QUERY.create_new) {
                 ctx.textQuery = undefined;
-                await ctx.scene.join(SCENE_QUERY.create_transaction, {referer: SCENE_QUERY.create_transaction, options: ctx.session.scene, account});
+                await ctx.scene.join(SCENE_QUERY.create_transaction);
                 return;
             }
         }
@@ -121,8 +127,8 @@ export const TransactionsScene = new Scene(
             paginationControl.push(BUTTON.PAGINATION_NEXT);
             buttons.push(paginationControl);
         }
-        const currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
-        const maxPage = Math.ceil(transactions.count / pageLimit);
+        currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
+        maxPage = Math.ceil(transactions.count / pageLimit);
         const messageContent: [string, Markup.Markup<InlineKeyboardMarkup>] = [
             `Page ${currentPage}/${maxPage}`, 
             Markup.inlineKeyboard(buttons),

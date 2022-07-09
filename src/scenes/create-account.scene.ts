@@ -9,6 +9,7 @@ import loggerLib from '../lib/logger/logger';
 import { IContext } from "../lib/bot.interface";
 import { CONSTANTS } from "./constants";
 import { formatAmount } from "../utils/formatAmount";
+import { escapeMarkdownV2 } from "../utils/escapeMarkdownV2";
 
 const logger = loggerLib.child({
     module: SCENE_QUERY.create_account,
@@ -16,15 +17,9 @@ const logger = loggerLib.child({
 });
 
 const exit = async (ctx: IContext, created: boolean = false) => {
-    if (ctx.session.scene?.referer === undefined) {
+    const back = await ctx.scene.history.back(1, {flags: {created: created ? true : undefined}});
+    if (!back) {
         await ctx.scene.join(SCENE_QUERY.home);
-    } else {
-        const options = ctx.session.scene.options;
-        if (created && options) {
-            options.options.offset = Math.floor((options.options.count + 1) / CONSTANTS.PAGE_ACCOUNTS_LIMIT) * CONSTANTS.PAGE_ACCOUNTS_LIMIT;
-            ctx.textQuery = undefined;
-        }
-        await ctx.scene.join(ctx.session.scene.referer, options ?? {});
     }
 };
 
@@ -109,12 +104,12 @@ export const CreateAccountScene = new Scene(
     Scene.default(async (ctx) => {
         if (ctx.session.scene.account.type === AccountTypeEnum.PURPOSE) {
             if (ctx.message && "text" in ctx.message) {
-                if (ctx.message.text.match(/^[0-9]+$/) !== null) {
-                    ctx.session.scene.account.purpose = parseInt(ctx.message.text);
+                if (ctx.message.text.match(/^[-]*[1-9][0-9]*(\.[0-9]+)*$/gm) !== null) {
+                    ctx.session.scene.account.purpose = parseFloat(ctx.message.text).toFixed(2);
                     return ctx.scene.next(1, true);
                 }
             }
-            await ctx.reply(`Please enter the target amount for new purpose account (without currency and spaces, just integer, ex: «10000»)`, Markup.inlineKeyboard([
+            await ctx.reply(`Please enter the target amount for new purpose account (just integers only format)`, Markup.inlineKeyboard([
                 [
                     BUTTON.PAGINATION_BACK,
                     BUTTON.PAGINATION_CLOSE
@@ -147,21 +142,22 @@ export const CreateAccountScene = new Scene(
             });
             if (account) {
                 await ctx.reply(`✅ Successfully created new account: «${accountOptions.name}»`);
+                return exit(ctx, true);
             } else {
                 await ctx.reply(`❌ Failed create new account: «${accountOptions.name}»`);
+                return exit(ctx);
             }
-            return exit(ctx, true);
         }
-        await ctx.replyWithMarkdown(
+        await ctx.replyWithMarkdownV2(
             [
                 `Please confirm your new account:`,
-                `\\- Name: «*${accountOptions.name}*»`,
-                `\\- Account type: *${AccountType[accountOptions.type]} ${accountOptions.type}*`,
-                `\\- Currency: *${AccountCurrency[accountOptions.currency]}*`,
+                `- Name: «*${accountOptions.name}*»`,
+                `- Account type: *${AccountType[accountOptions.type]} ${accountOptions.type}*`,
+                `- Currency: *${AccountCurrency[accountOptions.currency]}*`,
                 `${accountOptions.type === AccountTypeEnum.PURPOSE 
-                    ? `\\- Target amount: *${formatAmount(accountOptions.purpose!)} ${AccountCurrency[accountOptions.currency]}*`
+                    ? `- Target amount: *${formatAmount(accountOptions.purpose!)} ${AccountCurrency[accountOptions.currency]}*`
                     : ``}`
-            ].filter(text => text.length > 0).join("\n"), Markup.inlineKeyboard([
+            ].map(message => escapeMarkdownV2(message)).filter(text => text.length > 0).join("\n"), Markup.inlineKeyboard([
                 [
                     BUTTON.SAVE
                 ], 

@@ -10,6 +10,7 @@ import { IContext } from "../lib/bot.interface";
 import { InlineKeyboardButton } from "telegraf/typings/core/types/typegram";
 import { Types } from "mongoose";
 import { formatAmount } from "../utils/formatAmount";
+import { escapeMarkdownV2 } from "../utils/escapeMarkdownV2";
 
 const logger = loggerLib.child({
     module: SCENE_QUERY.edit_account,
@@ -17,11 +18,9 @@ const logger = loggerLib.child({
 });
 
 const exit = async (ctx: IContext) => {
-    if (ctx.session.scene?.referer === undefined) {
+    const back = await ctx.scene.history.back();
+    if (!back) {
         await ctx.scene.join(SCENE_QUERY.home);
-    } else {
-        const options = ctx.session.scene.options;
-        await ctx.scene.join(ctx.session.scene.referer, options ?? {});
     }
 };
 
@@ -99,10 +98,14 @@ export const EditAccountScene = new Scene(
         ]));
     }),
     Scene.default(async (ctx) => {
+        if (ctx.textQuery === BUTTON_QUERY.skip) {
+            ctx.textQuery = undefined;
+            return ctx.scene.next(1, true);
+        }
         if (ctx.session.scene.account.type === AccountTypeEnum.PURPOSE) {
             if (ctx.message && "text" in ctx.message) {
-                if (ctx.message.text.match(/^[0-9]+$/) !== null) {
-                    ctx.session.scene.account.purpose = parseInt(ctx.message.text);
+                if (ctx.message.text.match(/^[-]*[1-9][0-9]*(\.[0-9]+)*$/gm) !== null) {
+                    ctx.session.scene.account.purpose = parseFloat(ctx.message.text).toFixed(2);
                     return ctx.scene.next(1, true);
                 }
             }
@@ -116,7 +119,7 @@ export const EditAccountScene = new Scene(
                 }
                 return carry;
             }, [] as InlineKeyboardButton[]);
-            await ctx.reply(`Please enter the new target amount for new purpose account (without currency and spaces, just integer, ex: «10000»)`, Markup.inlineKeyboard(buttons));
+            await ctx.reply(`Please enter the new target amount for new purpose account (just integers only format)`, Markup.inlineKeyboard(buttons));
         } else {
             if (ctx.session.scene.action === 'back') {
                 ctx.session.scene.action = undefined;
@@ -155,18 +158,18 @@ export const EditAccountScene = new Scene(
             }
             return exit(ctx);
         }
-        await ctx.replyWithMarkdown(
+        await ctx.replyWithMarkdownV2(
             [
                 `Please confirm your updated account:`,
-                `\\- Name: ${originalAccountOptions.name !== accountOptions.name ? `«~${originalAccountOptions.name}~» ➞` : ``}«*${accountOptions.name}*»`,
-                `\\- Account type: ${originalAccountOptions.type !== accountOptions.type ? `«~${AccountType[originalAccountOptions.type]} ${originalAccountOptions.type}~» ➞` : ``} *${AccountType[accountOptions.type]} ${accountOptions.type}*`,
-                `\\- Currency: *${AccountCurrency[accountOptions.currency]}*`,
+                `- Name: ${originalAccountOptions.name !== accountOptions.name ? `«~${originalAccountOptions.name}~» ➞` : ``}«*${accountOptions.name}*»`,
+                `- Account type: ${originalAccountOptions.type !== accountOptions.type ? `«~${AccountType[originalAccountOptions.type]} ${originalAccountOptions.type}~» ➞` : ``} *${AccountType[accountOptions.type]} ${accountOptions.type}*`,
+                `- Currency: *${AccountCurrency[accountOptions.currency]}*`,
                 `${accountOptions.type === AccountTypeEnum.PURPOSE
-                    ? `\\- Target amount: ${originalAccountOptions.type === accountOptions.type && originalAccountOptions.purpose !== accountOptions.purpose
+                    ? `- Target amount: ${originalAccountOptions.type === accountOptions.type && originalAccountOptions.purpose !== accountOptions.purpose
                         ? `«~${formatAmount(originalAccountOptions.purpose!)} ${AccountCurrency[originalAccountOptions.currency]}~» ➞`
                         : ``
                     }*${formatAmount(accountOptions.purpose!)} ${AccountCurrency[accountOptions.currency]}*`: ``}`
-            ].filter(text => text.length > 0).join("\n"), Markup.inlineKeyboard([
+            ].map(message => escapeMarkdownV2(message)).filter(text => text.length > 0).join("\n"), Markup.inlineKeyboard([
                 [
                     BUTTON.SAVE
                 ], 
