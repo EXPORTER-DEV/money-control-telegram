@@ -10,6 +10,7 @@ import { TransactionDto } from "../database/schemas/transaction.schema";
 import moment from "moment";
 import { formatAmount } from "../utils/formatAmount";
 import { TransactionModel } from "../database/models/transaction.model";
+import { escapeMarkdownV2 } from "../utils/escapeMarkdownV2";
 
 const logger = loggerLib.child({
     module: SCENE_QUERY.delete_transaction,
@@ -50,11 +51,11 @@ export const DeleteTransactionScene = new Scene(
     Scene.default(async (ctx) => {
         const transaction: TransactionDto = ctx.session.scene.transaction;
         const account: AccountDto = ctx.session.scene.account;
-        const createdAt = moment(transaction.createdAt).format('YYYY-MM-DD hh:mm:ss');
-        await ctx.replyWithMarkdown([
+        const createdAt = moment(transaction.createdAt).format('YYYY-MM-DD HH:mm:ss');
+        await ctx.replyWithMarkdownV2([
             `Are you sure, you would like to delete transaction: «${formatAmount(transaction.amount)} *${AccountCurrency[account.currency]}* (${createdAt})»?`,
             `⚠️ *Transaction will be permanently deleted*`
-        ].join("\n"), Markup.inlineKeyboard([
+        ].map(message => escapeMarkdownV2(message)).join("\n"), Markup.inlineKeyboard([
             [BUTTON.CONFIRM],
             [BUTTON.PAGINATION_CLOSE]
         ]));
@@ -64,7 +65,7 @@ export const DeleteTransactionScene = new Scene(
         if (ctx.textQuery === BUTTON_QUERY.confirm) {
             const transactionOptions = ctx.session.scene.transaction as TransactionDto;
             const account = ctx.session.scene.account as AccountDto;
-            const createdAt = moment(transactionOptions.createdAt).format('YYYY-MM-DD hh:mm:ss');
+            const createdAt = moment(transactionOptions.createdAt).format('YYYY-MM-DD HH:mm:ss');
             logger.info({userId: ctx.user.id, transactionOptions}, `Starting deleting transaction: ${transactionOptions._id!}`);
             const transactionModel = ctx.database.inject<TransactionModel>(TransactionModel);
             const result = await transactionModel.delete(transactionOptions._id);

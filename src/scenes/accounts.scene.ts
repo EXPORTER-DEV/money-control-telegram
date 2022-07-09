@@ -48,6 +48,9 @@ export const AccountsScene = new Scene(
         let maxPage = Math.ceil(count / pageLimit);
         if (count !== undefined && offset !== undefined && currentPage > maxPage) {
             sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit) * pageLimit;
+            if (sceneOptions.offset < 0) {
+                sceneOptions.offset = 0;
+            }
         }
 
         if (ctx.textQuery !== undefined) {

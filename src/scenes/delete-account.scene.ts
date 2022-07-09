@@ -8,6 +8,7 @@ import { SCENE_QUERY } from "../navigation/scene-query";
 import loggerLib from '../lib/logger/logger';
 import { IContext } from "../lib/bot.interface";
 import { Types } from "mongoose";
+import { escapeMarkdownV2 } from "../utils/escapeMarkdownV2";
 
 const logger = loggerLib.child({
     module: SCENE_QUERY.delete_account,
@@ -50,7 +51,7 @@ export const DeleteAccountScene = new Scene(
         await ctx.replyWithMarkdown([
             `Are you sure, you would like to delete account: «*${account.name}*»?`,
             `⚠️ *All linked transaction will be permanently deleted*`
-        ].join("\n"), Markup.inlineKeyboard([
+        ].map(message => escapeMarkdownV2(message)).join("\n"), Markup.inlineKeyboard([
             [BUTTON.CONFIRM],
             [BUTTON.PAGINATION_CLOSE]
         ]));

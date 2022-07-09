@@ -57,6 +57,9 @@ export const TransactionsScene = new Scene(
         let maxPage = Math.ceil(count / pageLimit);
         if (count !== undefined && offset !== undefined && currentPage > maxPage) {
             sceneOptions.offset = Math.floor((count - pageLimit) / pageLimit) * pageLimit;
+            if (sceneOptions.offset < 0) {
+                sceneOptions.offset = 0;
+            }
         }
         if (ctx.textQuery !== undefined) {
             //
@@ -104,7 +107,7 @@ export const TransactionsScene = new Scene(
         const buttons: InlineKeyboardButton[][] = [];
         const pageTransactionButtons = transactions.items
             .map(transaction => {
-                const createdAt = moment(transaction.createdAt).format('YYYY-MM-DD hh:mm:ss');
+                const createdAt = moment(transaction.createdAt).format('YYYY-MM-DD HH:mm:ss');
                 return Markup.button.callback(
                     `${formatAmount(transaction.amount)} ${AccountCurrency[account.currency]} (${createdAt})`, 
                     `/transaction ${transaction._id}`
