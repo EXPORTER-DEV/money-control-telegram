@@ -1,0 +1,16 @@
+version: "3.2"
+services:
+  app:
+    build: .
+    container_name: money-control-telegram
+    volumes: 
+      - ./dist:/usr/src/app/dist
+    networks:
+      - services_net
+    env_file: .env
+    restart: always
+networks:
+  services_net:
+    driver: bridge
+    external: true
+    name: services_net
