@@ -20,7 +20,7 @@ export class AccountModel extends BaseModel {
         return this.model.find({}).exec();
     }
     async findAllByUserId(userId: Types.ObjectId, paginationOptions: IPaginationOptions): Promise<IPaginationResult<AccountDto>> {
-        const query = {user: new Types.ObjectId(userId)};
+        const query = {user: new Types.ObjectId(userId), ...paginationOptions.query};
         const findQuery = this.model.aggregate<IAccountSchema>()
             .match(query)
             .addFields({

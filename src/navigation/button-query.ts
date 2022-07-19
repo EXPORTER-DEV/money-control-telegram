@@ -19,5 +19,9 @@ export const BUTTON_QUERY = {
     'sort_target_desc': 'sort_target_desc',
     'sort_target_asc': 'sort_target_asc',
     'sort_date_desc': 'sort_date_desc',
-    'sort_date_asc': 'sort_date_asc'
+    'sort_date_asc': 'sort_date_asc',
+    'filter_account_type_purpose': 'filter_account_type_purpose',
+    'filter_account_type_accumulative': 'filter_account_type_accumulative',
+    'filter_account_type_all': 'filter_account_type_all',
+    'filter': 'filter',
 };

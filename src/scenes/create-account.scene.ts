@@ -7,7 +7,6 @@ import { BUTTON_QUERY } from "../navigation/button-query";
 import { SCENE_QUERY } from "../navigation/scene-query";
 import loggerLib from '../lib/logger/logger';
 import { IContext } from "../lib/bot.interface";
-import { CONSTANTS } from "./constants";
 import { formatAmount } from "../utils/formatAmount";
 import { escapeMarkdownV2 } from "../utils/escapeMarkdownV2";
 

@@ -1,5 +1,5 @@
 import { Markup } from "telegraf";
-import { AccountCurrency, AccountType } from "../database/schemas/account.schema";
+import { AccountCurrency, AccountType, AccountTypeEnum } from "../database/schemas/account.schema";
 import { BUTTON_QUERY } from "./button-query";
 import { SCENE_QUERY } from "./scene-query";
 
@@ -23,8 +23,14 @@ export const BUTTON = {
     'ADD_TRANSACTION': Markup.button.callback('🏧 Add transaction', BUTTON_QUERY.add_transaction),
     'SKIP': Markup.button.callback('🔘 Skip', BUTTON_QUERY.skip),
     'CONFIRM': Markup.button.callback('🆗 Confirm', BUTTON_QUERY.confirm),
-    'SORT_AMOUNT_DESC': Markup.button.callback('Amount ⬇️', BUTTON_QUERY.sort_amount_desc),
-    'SORT_AMOUNT_ASC': Markup.button.callback('Amount ⬆️', BUTTON_QUERY.sort_amount_asc),
-    'SORT_TARGET_DESC': Markup.button.callback('Target % ⬇️', BUTTON_QUERY.sort_target_desc),
-    'SORT_TARGET_ASC': Markup.button.callback('Target % ⬆️', BUTTON_QUERY.sort_target_asc),
+    'FILTER': Markup.button.callback('⚙️ Filter', BUTTON_QUERY.filter),
+    'SORT_AMOUNT_DESC': Markup.button.callback('Sort amount ⬇', BUTTON_QUERY.sort_amount_desc),
+    'SORT_AMOUNT_ASC': Markup.button.callback('Sort amount ⬆', BUTTON_QUERY.sort_amount_asc),
+    'SORT_TARGET_DESC': Markup.button.callback('Sort target % ⬇', BUTTON_QUERY.sort_amount_desc),
+    'SORT_TARGET_ASC': Markup.button.callback('Sort target % ⬆', BUTTON_QUERY.sort_amount_asc),
+    'SORT_DATE_DESC': Markup.button.callback('Sort date ⬇', BUTTON_QUERY.sort_date_desc),
+    'SORT_DATE_ASC': Markup.button.callback('Sort date ⬆', BUTTON_QUERY.sort_date_asc),
+    'FILTER_ACCOUNT_TYPE_PURPOSE': Markup.button.callback(`Purpose ${AccountType[AccountTypeEnum.PURPOSE]}`, BUTTON_QUERY.filter_account_type_purpose),
+    'FILTER_ACCOUNT_TYPE_ACCUMULATIVE': Markup.button.callback(`Accumulative ${AccountType[AccountTypeEnum.ACCUMULATIVE]}`, BUTTON_QUERY.filter_account_type_accumulative),
+    'FILTER_ACCOUNT_TYPE_ALL': Markup.button.callback('Show all', BUTTON_QUERY.filter_account_type_all),
 };

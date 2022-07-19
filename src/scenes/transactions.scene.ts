@@ -1,6 +1,7 @@
 import moment from "moment";
 import { Markup } from "telegraf";
 import { InlineKeyboardButton, InlineKeyboardMarkup } from "telegraf/typings/core/types/typegram";
+import { PaginationType } from "../database/models/interfaces";
 import { TransactionModel } from "../database/models/transaction.model";
 import { AccountCurrency, IAccountSchema } from "../database/schemas/account.schema";
 import { IContext } from "../lib/bot.interface";
@@ -44,6 +45,9 @@ export const TransactionsScene = new Scene(
         const transactionModel = ctx.database.inject<TransactionModel>(TransactionModel);
         ctx.session.scene.options = ctx.session.scene.options || {};
         const sceneOptions: {offset: number, limit: number, count: number} = ctx.session.scene.options;
+
+        ctx.session.sorting = ctx.session.sorting || {};
+        ctx.session.sorting.transaction_date_desc = ctx.session.sorting.transaction_date_desc ?? true;
 
         if (ctx.session.scene.flags?.deleted) {
             ctx.session.scene.flags!.deleted = undefined;
@@ -92,16 +96,27 @@ export const TransactionsScene = new Scene(
                 await ctx.scene.join(SCENE_QUERY.create_transaction);
                 return;
             }
+
+            if (ctx.textQuery === BUTTON_QUERY.sort_date_desc) {
+                ctx.session.sorting.transaction_date_desc = false;
+            } else if (ctx.textQuery === BUTTON_QUERY.sort_date_asc) {
+                ctx.session.sorting.transaction_date_desc = true;
+            }
         }
         if (sceneOptions.offset === undefined) {
             sceneOptions.offset = 0;
         }
+
+        const sortingDateDesc = ctx.session.sorting.transaction_date_desc;
+
+        const sort: PaginationType[] = [
+            {createdAt: sortingDateDesc === true ? -1 : 1}
+        ];
+
         const transactions = await transactionModel.findAllByAccountId(ctx.session.scene.account._id, ctx.user._id, {
             offset: sceneOptions.offset, 
             limit: pageLimit,
-            sort: [
-                {createdAt: -1},
-            ]
+            sort,
         });
 
         const buttons: InlineKeyboardButton[][] = [];
@@ -122,6 +137,12 @@ export const TransactionsScene = new Scene(
                 [BUTTON.PAGINATION_CLOSE]
             );
         } else {
+            buttons.push([
+                sortingDateDesc === false ? 
+                    BUTTON.SORT_DATE_ASC :
+                    BUTTON.SORT_DATE_DESC
+            ]);
+
             buttons.push(...pageTransactionButtons.map(button => ([button])));
             buttons.push([BUTTON.CREATE_NEW]);
             const paginationControl: InlineKeyboardButton[] = [];
@@ -133,7 +154,12 @@ export const TransactionsScene = new Scene(
         currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
         maxPage = Math.ceil(transactions.count / pageLimit);
         const messageContent: [string, Markup.Markup<InlineKeyboardMarkup>] = [
-            `Page ${currentPage}/${maxPage}`, 
+            [
+                `Page ${currentPage}/${maxPage}`,
+                transactions.count ?
+                    ` | ${sortingDateDesc === true ? 'Sort date desc ⬆': 'Sort date asc ⬇'}` :
+                    ``,
+            ].join(''), 
             Markup.inlineKeyboard(buttons),
         ];
         if (ctx.textQuery !== undefined && sceneOptions.count !== undefined) {

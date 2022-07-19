@@ -9,4 +9,5 @@ export interface IPaginationOptions {
     offset?: number;
     limit?: number;
     sort?: PaginationType[];
+    query?: Record<string, string>;
 }

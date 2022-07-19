@@ -55,7 +55,10 @@ export const AccountsScene = new Scene(
         }
 
         ctx.session.sorting = ctx.session.sorting || {};
-        ctx.session.sorting.account_amount_desc = ctx.session.sorting.account_amount_desc || true;
+        ctx.session.sorting.account_amount_desc = ctx.session.sorting.account_amount_desc ?? true;
+
+        ctx.session.filter = ctx.session.filter || {};
+        ctx.session.filter.account_type = ctx.session.filter.account_type ?? false;
 
         if (ctx.textQuery !== undefined) {
             if (ctx.textQuery === BUTTON_QUERY.pagination_back && offset !== undefined && count !== undefined) {
@@ -92,19 +95,52 @@ export const AccountsScene = new Scene(
             } else if (ctx.textQuery === BUTTON_QUERY.sort_amount_asc) {
                 ctx.session.sorting.account_amount_desc = true;
             }
+            if (ctx.textQuery === BUTTON_QUERY.filter) {
+                return ctx.scene.next(1, true);
+            }
+            if (ctx.textQuery === BUTTON_QUERY.filter_account_type_all) {
+                sceneOptions.offset = 0;
+                ctx.session.filter.account_type = false;
+            } else if (ctx.textQuery === BUTTON_QUERY.filter_account_type_purpose) {
+                sceneOptions.offset = 0;
+                ctx.session.filter.account_type = AccountTypeEnum.PURPOSE;
+            } else if (ctx.textQuery === BUTTON_QUERY.filter_account_type_accumulative) {
+                sceneOptions.offset = 0;
+                ctx.session.filter.account_type = AccountTypeEnum.ACCUMULATIVE;
+            }
         }
         if (sceneOptions.offset === undefined) {
             sceneOptions.offset = 0;
         }
-        const sorting_amount_desc = ctx.session.sorting.account_amount_desc;
-        const sort: PaginationType[] = [{transactionsTotal: sorting_amount_desc ? -1 : 1}];
+        const sortingAmountDesc = ctx.session.sorting.account_amount_desc;
+        const filterType: AccountTypeEnum | false = ctx.session.filter.account_type ?? false;
+
+        const sort: PaginationType[] = [
+            {transactionsTotal: sortingAmountDesc === true ? -1 : 1}
+        ];
+
+        if (filterType === AccountTypeEnum.PURPOSE) {
+            sort.push({transactionsTotal: sortingAmountDesc === true ? -1 : 1, purpose: sortingAmountDesc === true ? -1 : 1});
+        } else {
+            sort.push({transactionsTotal: sortingAmountDesc === true ? -1 : 1});
+        }
+
+        const query: Record<string, string> = {};
+        if (filterType === AccountTypeEnum.PURPOSE) {
+            query.type = AccountTypeEnum.PURPOSE;
+        } else if (filterType === AccountTypeEnum.ACCUMULATIVE) {
+            query.type = AccountTypeEnum.ACCUMULATIVE;
+        }
+
         const accounts = await accountModel.findAllByUserId(ctx.user._id, {
             offset: sceneOptions.offset, 
             limit: pageLimit,
             sort,
+            query,
         });
 
         const buttons: InlineKeyboardButton[][] = [];
+
         const pageAccountButtons = accounts.items
             .map(account => 
                 Markup.button.callback(
@@ -114,6 +150,9 @@ export const AccountsScene = new Scene(
             );
         if (accounts.count === 0) {
             buttons.push([
+                BUTTON.FILTER,
+            ]);
+            buttons.push([
                 Markup.button.callback('No account found', 'empty')
             ]);
             buttons.push(
@@ -121,8 +160,16 @@ export const AccountsScene = new Scene(
                 [BUTTON.PAGINATION_CLOSE]
             );
         } else {
-            ctx.session.sorting_account_desc = ctx.session.sorting_account_desc || true;
-            buttons.push([sorting_amount_desc ? BUTTON.SORT_AMOUNT_DESC : BUTTON.SORT_AMOUNT_ASC]);
+            buttons.push([
+                BUTTON.FILTER,
+                sortingAmountDesc === false ? 
+                    (filterType === AccountTypeEnum.PURPOSE ?
+                        BUTTON.SORT_TARGET_ASC :
+                        BUTTON.SORT_AMOUNT_ASC) :
+                    (filterType === AccountTypeEnum.PURPOSE ?
+                        BUTTON.SORT_TARGET_DESC :
+                        BUTTON.SORT_AMOUNT_DESC),
+            ]);
             buttons.push(...pageAccountButtons.map(button => ([button])));
             buttons.push([BUTTON.CREATE_NEW]);
             const paginationControl: InlineKeyboardButton[] = [];
@@ -134,7 +181,13 @@ export const AccountsScene = new Scene(
         currentPage = Math.ceil((sceneOptions.offset + pageLimit) / pageLimit);
         maxPage = Math.ceil(accounts.count / pageLimit);
         const messageContent: [string, Markup.Markup<InlineKeyboardMarkup>] = [
-            `Page ${currentPage}/${maxPage}`, 
+            [
+                `Page ${currentPage}/${maxPage}`,
+                accounts.count > 0 ? 
+                    ` | ${sortingAmountDesc === true ? 'Sort amount desc ⬆' : 'Sort amount asc ⬇'}` :
+                    ``,
+                ` | ${filterType === false ? 'All' : filterType === AccountTypeEnum.ACCUMULATIVE ? 'Accumulative only' : 'Purpose only'}`,
+            ].join(''), 
             Markup.inlineKeyboard(buttons),
         ];
         if (ctx.textQuery !== undefined && sceneOptions.count !== undefined) {
@@ -145,5 +198,25 @@ export const AccountsScene = new Scene(
         if (accounts.count > 0) {
             sceneOptions.count = accounts.count;
         }
+    }),
+    Scene.default(async (ctx) => {
+        const filterType: AccountTypeEnum | false = ctx.session.filter.account_type ?? false;
+        await ctx.editMessageText('Please, select filter options', 
+            Markup.inlineKeyboard([
+                filterType === false ? [
+                    BUTTON.FILTER_ACCOUNT_TYPE_ACCUMULATIVE,
+                    BUTTON.FILTER_ACCOUNT_TYPE_PURPOSE
+                ] : [
+                    (filterType === AccountTypeEnum.ACCUMULATIVE ?
+                        BUTTON.FILTER_ACCOUNT_TYPE_PURPOSE :
+                        BUTTON.FILTER_ACCOUNT_TYPE_ACCUMULATIVE),
+                    BUTTON.FILTER_ACCOUNT_TYPE_ALL,
+                ],
+                [
+                    BUTTON.SKIP
+                ],
+            ])
+        );
+        await ctx.scene.next(-1);
     }),
 );
