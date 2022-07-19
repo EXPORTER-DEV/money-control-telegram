@@ -43,6 +43,7 @@
     "pino-pretty": "^7.6.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "telegraf": "^4.8.2"
+    "telegraf": "^4.8.2",
+    "tsc": "^2.0.4"
   }
 }
