@@ -1,6 +1,7 @@
 import { Markup } from "telegraf";
 import { InlineKeyboardButton, InlineKeyboardMarkup } from "telegraf/typings/core/types/typegram";
 import { AccountModel } from "../database/models/account.model";
+import { PaginationType } from "../database/models/interfaces";
 import { AccountCurrency, AccountType, AccountTypeEnum } from "../database/schemas/account.schema";
 import { Scene } from "../middlewares/scene/scene";
 import { BUTTON } from "../navigation/button";
@@ -53,6 +54,9 @@ export const AccountsScene = new Scene(
             }
         }
 
+        ctx.session.sorting = ctx.session.sorting || {};
+        ctx.session.sorting.account_amount_desc = ctx.session.sorting.account_amount_desc || true;
+
         if (ctx.textQuery !== undefined) {
             if (ctx.textQuery === BUTTON_QUERY.pagination_back && offset !== undefined && count !== undefined) {
                 if (offset - pageLimit >= 0) {
@@ -83,13 +87,21 @@ export const AccountsScene = new Scene(
                 await ctx.scene.join(SCENE_QUERY.create_account);
                 return;
             }
+            if (ctx.textQuery === BUTTON_QUERY.sort_amount_desc) {
+                ctx.session.sorting.account_amount_desc = false;
+            } else if (ctx.textQuery === BUTTON_QUERY.sort_amount_asc) {
+                ctx.session.sorting.account_amount_desc = true;
+            }
         }
         if (sceneOptions.offset === undefined) {
             sceneOptions.offset = 0;
         }
+        const sorting_amount_desc = ctx.session.sorting.account_amount_desc;
+        const sort: PaginationType[] = [{transactionsTotal: sorting_amount_desc ? -1 : 1}];
         const accounts = await accountModel.findAllByUserId(ctx.user._id, {
             offset: sceneOptions.offset, 
-            limit: pageLimit
+            limit: pageLimit,
+            sort,
         });
 
         const buttons: InlineKeyboardButton[][] = [];
@@ -109,6 +121,8 @@ export const AccountsScene = new Scene(
                 [BUTTON.PAGINATION_CLOSE]
             );
         } else {
+            ctx.session.sorting_account_desc = ctx.session.sorting_account_desc || true;
+            buttons.push([sorting_amount_desc ? BUTTON.SORT_AMOUNT_DESC : BUTTON.SORT_AMOUNT_ASC]);
             buttons.push(...pageAccountButtons.map(button => ([button])));
             buttons.push([BUTTON.CREATE_NEW]);
             const paginationControl: InlineKeyboardButton[] = [];

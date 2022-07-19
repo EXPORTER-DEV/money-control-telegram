@@ -14,4 +14,10 @@ export const BUTTON_QUERY = {
     'show_transaction': 'show_transaction',
     'add_transaction': 'add_transaction',
     'confirm': 'confirm',
+    'sort_amount_desc': 'sort_amount_desc',
+    'sort_amount_asc': 'sort_amount_asc',
+    'sort_target_desc': 'sort_target_desc',
+    'sort_target_asc': 'sort_target_asc',
+    'sort_date_desc': 'sort_date_desc',
+    'sort_date_asc': 'sort_date_asc'
 };

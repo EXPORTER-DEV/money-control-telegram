@@ -23,4 +23,8 @@ export const BUTTON = {
     'ADD_TRANSACTION': Markup.button.callback('🏧 Add transaction', BUTTON_QUERY.add_transaction),
     'SKIP': Markup.button.callback('🔘 Skip', BUTTON_QUERY.skip),
     'CONFIRM': Markup.button.callback('🆗 Confirm', BUTTON_QUERY.confirm),
+    'SORT_AMOUNT_DESC': Markup.button.callback('Amount ⬇️', BUTTON_QUERY.sort_amount_desc),
+    'SORT_AMOUNT_ASC': Markup.button.callback('Amount ⬆️', BUTTON_QUERY.sort_amount_asc),
+    'SORT_TARGET_DESC': Markup.button.callback('Target % ⬇️', BUTTON_QUERY.sort_target_desc),
+    'SORT_TARGET_ASC': Markup.button.callback('Target % ⬆️', BUTTON_QUERY.sort_target_asc),
 };
