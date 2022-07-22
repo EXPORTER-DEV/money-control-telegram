@@ -1,9 +1,16 @@
 import { isNumber } from "class-validator";
 import { IContext } from "../../lib/bot.interface";
 import { ILogger } from "../../lib/logger/logger";
-import { Scene, SceneItem } from "./scene";
+import { Scene } from "./scene";
 import { ISceneInfo, IScenePositionResult, ISceneSessionContext, SceneItemEnum } from "./scene.interface";
 
+const answerCbQuery = async (ctx: IContext) => {
+    if (ctx.textQuery) {
+        await ctx.answerCbQuery().catch(() => {
+            // Use it for prevent sending callback_query event to bot again.
+        });
+    }  
+};
 export class SceneController {
     constructor(
         private ctx: IContext, 
@@ -42,10 +49,12 @@ export class SceneController {
                     await position.items[0].handler(this.ctx);
                 }
             }
+            await answerCbQuery(this.ctx);
             return true;
         } else {
             this.middleware.logger.warn({user: this.ctx.from!.id}, `Can't find scene "${name}".`);
         }
+        await answerCbQuery(this.ctx);
         return false;
     }
     async next(step: number = 1, forceInit?: boolean) {
@@ -250,11 +259,11 @@ export class SceneMiddleware {
                             ]);
                             // In case when Scene.callback has exited current scene or moved to another, then stop execution.
                             if (current !== ctx.session.scene?.name) {
-                                return;
+                                return answerCbQuery(ctx);
                             }
                             // If one of result item is false, then stop execution:
                             if (result.some(res => res === false)) {
-                                return;
+                                return answerCbQuery(ctx);
                             }
                         }
                     } else {
@@ -269,7 +278,7 @@ export class SceneMiddleware {
                         const result = this.findScenePosition(find, SceneItemEnum.DEFAULT, ctx.session!.scene!.current);
                         if (result !== undefined) {
                             await result.items[0].handler(ctx);
-                            return;
+                            return answerCbQuery(ctx);
                         } else {
                             await sceneController.exit();
                         }

@@ -1,4 +1,4 @@
-import { Markup, Telegraf } from 'telegraf';
+import { Telegraf } from 'telegraf';
 import 'dotenv/config';
 import "reflect-metadata";
 
@@ -110,12 +110,8 @@ const init = async () => {
     } catch (e: any) {
         sceneLogger.error(`Failed initing: ${e.stack!}`);
     }
-    //
+
     bot.command('quit', (ctx) => {
-        // Explicit usage
-        //   ctx.telegram.leaveChat(ctx.message.chat.id)
-    
-        // Using context shortcut
         ctx.leaveChat();
     });
 
@@ -124,32 +120,6 @@ const init = async () => {
         await ctx.scene.join(SCENE_QUERY.home);
         return next();
     });
-    
-    // bot.on('text', async (ctx, next) => {
-    //     ctx.session.counter = ctx.session.counter + 1 || 1;
-    //     await ctx.reply(`Hello! Counter is: ${ctx.session.counter}`, KEYBOARD.MAIN);
-    //     return next();
-    // });
-    
-    bot.on('callback_query', (async (ctx, next) => {
-        console.log('CALLBACK_QUERY');
-        console.dir(ctx.callbackQuery);
-        return next();
-    }));
-    
-    
-    bot.action('callback_action', async (ctx, next) => {
-        await ctx.answerCbQuery();
-        await ctx.editMessageText('test');
-        return next();
-    });
-
-    bot.command('account', async (ctx, next) => {
-        console.dir(ctx.message);
-        return next();
-    });
-    //
-
     bot.launch();
     
     process.once('SIGINT', () => bot.stop('SIGINT'));
