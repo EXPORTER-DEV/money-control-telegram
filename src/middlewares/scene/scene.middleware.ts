@@ -2,12 +2,12 @@ import { isNumber } from "class-validator";
 import { IContext } from "../../lib/bot.interface";
 import { ILogger } from "../../lib/logger/logger";
 import { Scene } from "./scene";
-import { ISceneInfo, IScenePositionResult, ISceneSessionContext, SceneItemEnum } from "./scene.interface";
+import { ISceneInfo, IScenePositionResult, SceneItemEnum } from "./scene.interface";
 
 const answerCbQuery = async (ctx: IContext) => {
     if (ctx.textQuery) {
         await ctx.answerCbQuery().catch(() => {
-            // Use it for prevent sending callback_query event to bot again.
+            // Use it for preventing sending callback_query event to bot again.
         });
     }  
 };
