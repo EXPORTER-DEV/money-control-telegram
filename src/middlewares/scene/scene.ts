@@ -1,6 +1,6 @@
-import { IScene, ISceneCreation, ISceneItemCreation, SceneItemEnum, SceneItemHandlerType } from "./scene.interface";
+import { IScene, ISceneCreation, ISceneItem, ISceneItemCreation, SceneItemEnum, SceneItemHandlerType } from "./scene.interface";
 
-export class SceneItem {
+export class SceneItem implements ISceneItem {
     type: SceneItemEnum;
     name?: string;
     handler: SceneItemHandlerType;
@@ -17,11 +17,11 @@ export class SceneItem {
 
 export class Scene implements IScene {
     data: ISceneCreation;
-    items: SceneItem[] = [];
-    joined: SceneItem[] = [];
-    exited: SceneItem[] = [];
-    callback: SceneItem[] = [];
-    constructor(data: ISceneCreation, ...items: SceneItem[]) {
+    items: ISceneItem[] = [];
+    joined: ISceneItem[] = [];
+    exited: ISceneItem[] = [];
+    callback: ISceneItem[] = [];
+    constructor(data: ISceneCreation, ...items: ISceneItem[]) {
         this.data = data;
         for (const item of items) {
             if (item.type === SceneItemEnum.JOINED) {
@@ -38,19 +38,19 @@ export class Scene implements IScene {
             }
         }
     }
-    static joined(handler: SceneItemHandlerType): SceneItem {
+    static joined(handler: SceneItemHandlerType): ISceneItem {
         return new SceneItem(SceneItemEnum.JOINED, handler);
     }
-    static exited(handler: SceneItemHandlerType): SceneItem {
+    static exited(handler: SceneItemHandlerType): ISceneItem {
         return new SceneItem(SceneItemEnum.EXITED, handler);
     }
-    static callback(handler: SceneItemHandlerType): SceneItem {
+    static callback(handler: SceneItemHandlerType): ISceneItem {
         return new SceneItem(SceneItemEnum.CALLBACK, handler);
     }
-    static default(name: string): SceneItem;
-    static default(name: string, handler: SceneItemHandlerType): SceneItem;
-    static default(handle: SceneItemHandlerType): SceneItem;
-    static default(...args: any[]) {
+    static default(name: string): ISceneItem;
+    static default(name: string, handler: SceneItemHandlerType): ISceneItem;
+    static default(handle: SceneItemHandlerType): ISceneItem;
+    static default(...args: any[]): ISceneItem {
         if (args.length >= 2) throw new Error(`Got ${args.length} argument(s), expected 2 / 1 argument.`);
         let name: string | undefined = undefined;
         let handler: SceneItemHandlerType | undefined = undefined;

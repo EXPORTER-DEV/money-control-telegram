@@ -3,7 +3,7 @@ import { Config, IConfig, ISessionContext } from "./session.interface";
 import { ILogger } from "../../lib/logger/logger";
 
 export class SessionMiddleware {
-    connection: Redis;
+    private connection: Redis;
     key: string;
     logger: ILogger;
     constructor(data: IConfig, logger: ILogger) {

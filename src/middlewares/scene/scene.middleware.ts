@@ -1,8 +1,7 @@
 import { isNumber } from "class-validator";
 import { IContext } from "../../lib/bot.interface";
 import { ILogger } from "../../lib/logger/logger";
-import { Scene } from "./scene";
-import { ISceneInfo, IScenePositionResult, SceneItemEnum } from "./scene.interface";
+import { IScene, ISceneController, ISceneHistoryMiddleware, ISceneInfo, ISceneMiddleware, IScenePositionResult, SceneItemEnum } from "./scene.interface";
 
 const answerCbQuery = async (ctx: IContext) => {
     if (ctx.textQuery) {
@@ -11,7 +10,7 @@ const answerCbQuery = async (ctx: IContext) => {
         });
     }  
 };
-export class SceneController {
+export class SceneController implements ISceneController {
     constructor(
         private ctx: IContext, 
         private middleware: SceneMiddleware,
@@ -19,13 +18,13 @@ export class SceneController {
     ) {}
     get history() {
         return {
-            back: (count?: number, additionalOptions?: Record<string, any>, forceInit?: boolean) => this.historyMiddleware.back.call(this.historyMiddleware, count, additionalOptions, forceInit),
+            back: (count?: number, additionalOptions?: Record<string, unknown>, forceInit?: boolean) => this.historyMiddleware.back.call(this.historyMiddleware, count, additionalOptions, forceInit),
             current: this.ctx.session.scene.name,
             list: this.historyMiddleware.history,
             clear: () => this.historyMiddleware.clear.call(this.historyMiddleware),
         };
     }
-    async join(name: string, options?: Record<string, any>, forceInit?: boolean): Promise<boolean> {
+    async join(name: string, options?: Record<string, unknown>, forceInit?: boolean): Promise<boolean> {
         this.historyMiddleware.push(this.ctx.session.scene, {name, ...options} as ISceneInfo);
         await this.exit();
         const find = this.middleware.findScene(name);
@@ -57,7 +56,7 @@ export class SceneController {
         await answerCbQuery(this.ctx);
         return false;
     }
-    async next(step: number = 1, forceInit?: boolean) {
+    async next(step: number = 1, forceInit?: boolean): Promise<void> {
         if (this.ctx.session!.scene !== undefined) {
             const find = this.middleware.findScene(this.ctx.session!.scene!.name);
             if (find !== undefined) {
@@ -76,7 +75,7 @@ export class SceneController {
             }
         }
     }
-    async jump(position: number | string, forceInit?: boolean) {
+    async jump(position: number | string, forceInit?: boolean): Promise<void> {
         if (this.ctx.session!.scene !== undefined) {
             const find = this.middleware.findScene(this.ctx.session!.scene!.name);
             if (find !== undefined) {
@@ -94,7 +93,7 @@ export class SceneController {
             }
         }
     }
-    async exit() {
+    async exit(): Promise<void> {
         if (this.ctx.session!.scene !== undefined) {
             const find = this.middleware.findScene(this.ctx.session!.scene!.name);
             if (find !== undefined) {
@@ -111,14 +110,14 @@ export class SceneController {
     }
 }
 
-export class SceneHistoryMiddleware {
+export class SceneHistoryMiddleware implements ISceneHistoryMiddleware {
     constructor(
         private ctx: IContext,
         private logger: ILogger,
     ) {
         this.logger = logger.child({module: 'SceneHistoryMiddleware'});
     }
-    async back(count: number = 1, additionalOptions: Record<string, any> = {}, forceInit: boolean = false): Promise<boolean> {
+    async back(count: number = 1, additionalOptions: Record<string, unknown> = {}, forceInit: boolean = false): Promise<boolean> {
         const sceneInfo = this.take(count);
         if (sceneInfo) {
             if (sceneInfo.name === this.ctx.session.scene.name) {
@@ -163,10 +162,10 @@ export class SceneHistoryMiddleware {
     }
 }
 
-export class SceneMiddleware {
-    private list: Scene[] = [];
+export class SceneMiddleware implements ISceneMiddleware {
+    private list: IScene[] = [];
     readonly logger: ILogger;
-    constructor(logger: ILogger, list: Scene[]) {
+    constructor(logger: ILogger, list: IScene[]) {
         this.logger = logger.child({module: 'SceneMiddleware'});
         for (const item of list) {
             const check = this.list.find((find) => find.data.name === item.data.name || find.data.startQuery === item.data.startQuery);
@@ -179,7 +178,7 @@ export class SceneMiddleware {
             this.logger.info({scene: JSON.stringify(item)}, `Registered scene "${item.data.name}", startQuery: ${item.data.startQuery ? `[${[...(item.data.startQuery instanceof Array ? item.data.startQuery : [item.data.startQuery])].map((item) => `"${item}"`).join(',')}]`:  'false'}, joined events: ${item.joined.length}, exited events: ${item.exited.length}, callback events: ${item.callback.length}, default handlers: ${item.items.length}`);
         }
     }
-    findSceneByQuery(query: string): Scene | undefined {
+    findSceneByQuery(query: string): IScene | undefined {
         return this.list.find((item) => {
             if (typeof item.data.startQuery === 'string') {
                 return item.data.startQuery === query;
@@ -188,10 +187,10 @@ export class SceneMiddleware {
             }
         });
     }
-    findScene(name: string): Scene | undefined {
+    findScene(name: string): IScene | undefined {
         return this.list.find((item) => item.data.name === name);
     }
-    findScenePosition(scene: Scene, type: SceneItemEnum, position?: number | string): IScenePositionResult | undefined {
+    findScenePosition(scene: IScene, type: SceneItemEnum, position?: number | string): IScenePositionResult | undefined {
         if (type === SceneItemEnum.DEFAULT && position !== undefined) {
             if (isNumber(position)) {
                 if (scene.items[+position] !== undefined) {

@@ -1,11 +1,11 @@
 import { Context } from "telegraf";
 import { IUserSchema } from "../database/schemas/user.schema";
 import DatabaseMiddleware from "../middlewares/database";
-import { SceneController } from "../middlewares/scene/scene.middleware";
+import { ISceneController } from "../middlewares/scene/scene.interface";
 
 export interface IContext extends Context {
     session: Record<string, any>;
-    scene: SceneController;
+    scene: ISceneController;
     database: DatabaseMiddleware;
     textQuery?: string;
     user: IUserSchema;

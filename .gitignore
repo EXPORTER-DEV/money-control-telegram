@@ -4,3 +4,4 @@ node_modules/
 .vscode
 docker-compose.yml
 dist
+coverage
