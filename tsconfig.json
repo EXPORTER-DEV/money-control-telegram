@@ -15,5 +15,6 @@
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "jest.config.ts",
+    "src/test/*",
   ],
 }
