@@ -4,9 +4,9 @@ import { ILogger } from "../../lib/logger/logger";
 import { IScene, ISceneController, ISceneHistoryMiddleware, ISceneInfo, ISceneMiddleware, IScenePositionResult, SceneItemEnum } from "./scene.interface";
 
 const answerCbQuery = async (ctx: IContext) => {
-    if (ctx.textQuery) {
-        await ctx.answerCbQuery().catch(() => {
-            // Use it for preventing sending callback_query event to bot again.
+    if (ctx.from && ctx.callbackQuery) {
+        await ctx.answerCbQuery('').catch((e) => {
+            return;
         });
     }  
 };
