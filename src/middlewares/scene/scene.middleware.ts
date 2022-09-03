@@ -105,6 +105,8 @@ export class SceneController implements ISceneController {
                         ...exited.items.map((item) => item.handler(this.ctx))
                     ]);
                 }
+            } else {
+                this.ctx.session.scene = undefined;
             }
         }
     }

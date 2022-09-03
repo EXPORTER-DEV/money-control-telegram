@@ -1,5 +1,6 @@
 import { IContext } from "../lib/bot.interface";
 import { ILogger } from "../lib/logger/logger";
+import { IScene, ISceneCreation, SceneItemEnum } from "../middlewares/scene/scene.interface";
 import { IConfig } from "../middlewares/session/session.interface";
 
 export const ContextProvider = (options?: Partial<IContext>): Partial<IContext> => ({
@@ -11,11 +12,11 @@ export const ContextProvider = (options?: Partial<IContext>): Partial<IContext> 
     ...options,
 });
 
-type ProviderType = (ctx: Partial<IContext>, next: () => Promise<void>) => Promise<void>;
+type ProviderType = (ctx: IContext, next: () => Promise<void> | void) => Promise<void>;
 
 export const UseProvider = (
     handler: ProviderType,
-    context: Partial<IContext>,
+    context: IContext,
     next: () => Promise<void> = jest.fn(async () => {
         1;
     }),
@@ -55,3 +56,24 @@ export const RedisMockConfig: IConfig = {
     },
     key: '',
 };
+
+export const SceneItemProvider = (type: SceneItemEnum = SceneItemEnum.DEFAULT) => ({
+    type,
+    handler: jest.fn(async () => {return;}),
+});
+
+export const SceneProvider = (data: ISceneCreation): IScene => ({
+    data,
+    items: [
+        SceneItemProvider(),
+    ],
+    joined: [
+        SceneItemProvider(SceneItemEnum.JOINED),
+    ],
+    exited: [
+        SceneItemProvider(SceneItemEnum.EXITED),
+    ],
+    callback: [
+        SceneItemProvider(SceneItemEnum.CALLBACK),
+    ]
+});
