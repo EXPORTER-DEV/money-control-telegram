@@ -12,5 +12,4 @@
 - [x] Add ESLint
 - [x] Add sorting ability for transactions pagination
 - [x] Add sorting ability for accounts pagination
-- [ ] Add unit tests
-- [ ] Add correctly navigation on last page when using sorting pagination and creating or removal one item
+- [x] Add unit tests
