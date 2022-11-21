@@ -16,6 +16,7 @@ export const BUTTON = {
     'ACCOUNT_PURPOSE_TYPE': Markup.button.callback(`${AccountType.purpose} Purpose`, BUTTON_QUERY.account_purpose_type),
     'ACCOUNT_USD_CURRENCY': Markup.button.callback(`USD: ${AccountCurrency.usd}`, BUTTON_QUERY.account_usd_currency),
     'ACCOUNT_RUB_CURRENCY': Markup.button.callback(`RUB: ${AccountCurrency.rub}`, BUTTON_QUERY.account_rub_currency),
+    'ACCOUNT_EUR_CURRENCY': Markup.button.callback(`EUR: ${AccountCurrency.eur}`, BUTTON_QUERY.account_eur_currency),
     'SAVE': Markup.button.callback(`💾 Save`, BUTTON_QUERY.save),
     'EDIT': Markup.button.callback('📝 Edit', BUTTON_QUERY.edit),
     'DELETE': Markup.button.callback('🗑 Delete', BUTTON_QUERY.delete),

@@ -83,16 +83,25 @@ export const CreateAccountScene = new Scene(
     }),
     Scene.default(async (ctx) => {
         if (ctx.textQuery 
-            && [BUTTON_QUERY.account_rub_currency, BUTTON_QUERY.account_usd_currency].includes(ctx.textQuery)) {
-            ctx.session.scene.account.currency = BUTTON_QUERY.account_rub_currency === ctx.textQuery ?
-                AccountCurrencyEnum.RUB :
-                AccountCurrencyEnum.USD;
+            && [BUTTON_QUERY.account_rub_currency, BUTTON_QUERY.account_usd_currency, BUTTON_QUERY.account_eur_currency].includes(ctx.textQuery)) {
+            switch (ctx.textQuery) {
+                case BUTTON_QUERY.account_rub_currency:
+                    ctx.session.scene.account.currency = AccountCurrencyEnum.RUB;
+                    break;
+                case BUTTON_QUERY.account_eur_currency:
+                    ctx.session.scene.account.currency = AccountCurrencyEnum.EUR;
+                    break;
+                default:
+                    ctx.session.scene.account.currency = AccountCurrencyEnum.USD;
+            }
+
             return ctx.scene.next(1, true);
         }
         await ctx.reply(`Please select currency for new ${ctx.session.scene.account.type === AccountTypeEnum.PURPOSE ? 'purpose' : 'accumulative'} account`, Markup.inlineKeyboard([
             [
                 BUTTON.ACCOUNT_RUB_CURRENCY,
-                BUTTON.ACCOUNT_USD_CURRENCY
+                BUTTON.ACCOUNT_USD_CURRENCY,
+                BUTTON.ACCOUNT_EUR_CURRENCY,
             ],
             [
                 BUTTON.PAGINATION_BACK,

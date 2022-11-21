@@ -7,6 +7,7 @@ export const BUTTON_QUERY = {
     'account_purpose_type': 'account_purpose_type',
     'account_usd_currency': 'account_usd_currency',
     'account_rub_currency': 'account_rub_currency',
+    'account_eur_currency': 'account_eur_currency',
     'save': 'save',
     'edit': 'edit',
     'delete': 'delete',

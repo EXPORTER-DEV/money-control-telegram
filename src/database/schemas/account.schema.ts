@@ -12,11 +12,13 @@ export enum AccountTypeEnum {
 export enum AccountCurrencyEnum {
     RUB = 'rub',
     USD = 'usd',
+    EUR = 'eur',
 }
 
 export const AccountCurrency = {
     [AccountCurrencyEnum.RUB]: '₽',
-    [AccountCurrencyEnum.USD]: '$'
+    [AccountCurrencyEnum.USD]: '$',
+    [AccountCurrencyEnum.EUR]: '€',
 };
 
 export const AccountType = {
