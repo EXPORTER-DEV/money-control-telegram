@@ -1,4 +1,3 @@
-import moment from "moment";
 import { Markup } from "telegraf";
 import { InlineKeyboardButton, InlineKeyboardMarkup } from "telegraf/typings/core/types/typegram";
 import { PaginationType } from "../database/models/interfaces";
@@ -10,6 +9,7 @@ import { BUTTON } from "../navigation/button";
 import { BUTTON_QUERY } from "../navigation/button-query";
 import { SCENE_QUERY } from "../navigation/scene-query";
 import { formatAmount } from "../utils/formatAmount";
+import { formatTimestamp } from "../utils/formatTimestamp";
 import { CONSTANTS } from "./constants";
 
 const pageLimit = CONSTANTS.PAGE_ACCOUNTS_LIMIT;
@@ -122,7 +122,7 @@ export const TransactionsScene = new Scene(
         const buttons: InlineKeyboardButton[][] = [];
         const pageTransactionButtons = transactions.items
             .map(transaction => {
-                const createdAt = moment(transaction.createdAt).format('YYYY-MM-DD HH:mm:ss');
+                const createdAt = formatTimestamp(transaction.createdAt);
                 return Markup.button.callback(
                     `${formatAmount(transaction.amount)} ${AccountCurrency[account.currency]} (${createdAt})`, 
                     `/transaction ${transaction._id}`
