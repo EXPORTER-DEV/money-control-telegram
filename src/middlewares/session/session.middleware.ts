@@ -19,10 +19,10 @@ export class SessionMiddleware {
             db: config.connection.database,
             retryStrategy(times) {
                 if (times > config.connection.maxRetries!) {
-                    const delay = config.connection.reconnectDelay!;
-                    return delay;
+                    return config.connection.reconnectDelay!;
                 } else {
-                    return null;
+                    logger.error('Reached connection maxRetries count, kill process');
+                    process.exit(-1);
                 }
             },
         });
@@ -32,8 +32,9 @@ export class SessionMiddleware {
         this.connection.on('error', (e: Error) => {
             this.logger.error({error: e.stack}, 'Got redis error');
         });
-        this.connection.on('close', () => {
+        this.connection.on('close', async () => {
             this.logger.info('Redis closed connection');
+            await this.connection.connect();
         });
     }
     generateKey(userId: number): string {
